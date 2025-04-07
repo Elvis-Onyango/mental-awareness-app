@@ -1,0 +1,82 @@
+<!-- templates/mood/mood_entry_form.html -->
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Mood Entry | MindWell{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">
+            {% if object %}Edit Mood Entry{% else %}Add Mood Entry{% endif %}
+        </h2>
+        
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Mood Level
+                </label>
+                <div class="grid grid-cols-5 gap-2 mb-2">
+                    {% for value, text in form.fields.mood_level.choices %}
+                    <label class="flex flex-col items-center p-2 rounded-lg cursor-pointer 
+                                {% if form.mood_level.value == value|stringformat:'s' %}bg-blue-100 border border-blue-300
+                                {% else %}bg-gray-100 hover:bg-gray-200{% endif %}">
+                        <input type="radio" name="mood_level" value="{{ value }}" 
+                               class="hidden" {% if form.mood_level.value == value|stringformat:'s' %}checked{% endif %}>
+                        <span class="text-2xl mb-1">
+                            {% if value == 1 %}😞
+                            {% elif value == 2 %}😕
+                            {% elif value == 3 %}😐
+                            {% elif value == 4 %}🙂
+                            {% else %}😊{% endif %}
+                        </span>
+                        <span class="text-xs text-center">{{ text }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% if form.mood_level.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.mood_level.errors.as_text }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="mb-4">
+                <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Notes (Optional)
+                </label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.notes.errors.as_text }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="mb-6">
+                <label for="{{ form.related_quiz.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Related Quiz (Optional)
+                </label>
+                {{ form.related_quiz }}
+                {% if form.related_quiz.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.related_quiz.errors.as_text }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'mood_dashboard' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    {% if object %}Update{% else %}Add{% endif %} Entry
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    textarea {
+        min-height: 100px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+
+{% block title %}Counselor Dashboard | MindWell{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Dashboard Header -->
+    <div class="mb-8">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Counselor Dashboard</h1>
+                <div class="flex items-center">
+                    {% if counselor.user.profile_picture %}
+                    <img class="h-12 w-12 rounded-full mr-4" src="{{ counselor.user.profile_picture.url }}" alt="Profile">
+                    {% endif %}
+                    <div>
+                        <p class="text-lg text-gray-600">Welcome back, {{ counselor.user.get_full_name }}</p>
+                        <p class="text-sm text-gray-500">{{ counselor.specialization }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-blue-50 px-4 py-2 rounded-lg">
+                <p class="text-blue-800 font-medium">License: {{ counselor.license_number }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Total Clients -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Total Clients</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_clients }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Sessions -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Completed Sessions</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.completed_sessions }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Rating -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Average Rating</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.avg_session_rating|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client Retention -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Client Retention</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.client_retention }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Upcoming Appointments -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-900">Upcoming Appointments</h2>
+                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-500">View all</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for appointment in upcoming_appointments %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            {% if appointment.client.profile_picture %}
+                                            <img class="h-10 w-10 rounded-full" src="{{ appointment.client.profile_picture.url }}" alt="">
+                                            {% else %}
+                                            <span class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                                                {{ appointment.client.username|first|upper }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ appointment.client.get_full_name }}</div>
+                                            <div class="text-sm text-gray-500">{{ appointment.client.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ appointment.datetime|date:"M d, Y" }}</div>
+                                    <div class="text-sm text-gray-500">{{ appointment.datetime|time }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        {{ appointment.session_type }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900 mr-3">Details</a>
+                                    <a href="#" class="text-green-600 hover:text-green-900">Start</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                                    No upcoming appointments
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Client Mood Trends -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Client Mood Trends</h2>
+                <canvas id="moodChart" class="w-full h-64"></canvas>
+                <div class="mt-4 grid grid-cols-5 gap-2 text-center">
+                    <div>
+                        <span class="text-2xl">😞</span>
+                        <p class="text-xs">{{ mood_stats.1 }}%</p>
+                    </div>
+                    <div>
+                        <span class="text-2xl">😕</span>
+                        <p class="text-xs">{{ mood_stats.2 }}%</p>
+                    </div>
+                    <div>
+                        <span class="text-2xl">😐</span>
+                        <p class="text-xs">{{ mood_stats.3 }}%</p>
+                    </div>
+                    <div>
+                        <span class="text-2xl">🙂</span>
+                        <p class="text-xs">{{ mood_stats.4 }}%</p>
+                    </div>
+                    <div>
+                        <span class="text-2xl">😊</span>
+                        <p class="text-xs">{{ mood_stats.5 }}%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="space-y-8">
+            <!-- Recent Clients -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-900">Recent Clients</h2>
+                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-500">View all</a>
+                </div>
+                <ul class="divide-y divide-gray-200">
+                    {% for client in recent_clients %}
+                    <li class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                {% if client.profile_picture %}
+                                <img class="h-10 w-10 rounded-full" src="{{ client.profile_picture.url }}" alt="">
+                                {% else %}
+                                <span class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                                    {{ client.username|first|upper }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ client.get_full_name }}</div>
+                                <div class="text-sm text-gray-500">{{ client.email }}</div>
+                                <div class="text-xs text-gray-400 mt-1">Joined {{ client.date_joined|date:"M d, Y" }}</div>
+                            </div>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="px-6 py-4 text-center text-gray-500">
+                        No recent clients
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Forum Activity -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-900">Forum Activity</h2>
+                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-500">View all</a>
+                </div>
+                <ul class="divide-y divide-gray-200">
+                    {% for post in forum_activity %}
+                    <li class="px-6 py-4">
+                        <div class="flex justify-between">
+                            <div class="text-sm font-medium text-gray-900">{{ post.title }}</div>
+                            <span class="text-xs text-gray-500">{{ post.created_at|timesince }} ago</span>
+                        </div>
+                        <div class="text-sm text-gray-600 mt-1 line-clamp-2">{{ post.content }}</div>
+                        <div class="mt-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ post.category.name }}
+                            </span>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="px-6 py-4 text-center text-gray-500">
+                        No recent forum activity
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Upcoming Events -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-900">Upcoming Events</h2>
+                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-500">View all</a>
+                </div>
+                <ul class="divide-y divide-gray-200">
+                    {% for event in events %}
+                    <li class="px-6 py-4">
+                        <div class="flex justify-between">
+                            <div class="text-sm font-medium text-gray-900">{{ event.title }}</div>
+                            <span class="text-xs text-gray-500">{{ event.start_time|date:"M d" }}</span>
+                        </div>
+                        <div class="text-sm text-gray-600 mt-1">{{ event.start_time|time }} - {{ event.end_time|time }}</div>
+                        <div class="mt-2 flex justify-between items-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {{ event.location }}
+                            </span>
+                            <a href="#" class="text-xs text-blue-600 hover:text-blue-500">Details</a>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="px-6 py-4 text-center text-gray-500">
+                        No upcoming events
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Mood Chart
+    const moodCtx = document.getElementById('moodChart').getContext('2d');
+    new Chart(moodCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Very Negative', 'Negative', 'Neutral', 'Positive', 'Very Positive'],
+            datasets: [{
+                label: 'Mood Entries',
+                data: {{ mood_data.values|safe }},
+                backgroundColor: [
+                    'rgba(239, 68, 68, 0.7)',
+                    'rgba(249, 115, 22, 0.7)',
+                    'rgba(234, 179, 8, 0.7)',
+                    'rgba(34, 197, 94, 0.7)',
+                    'rgba(16, 185, 129, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(239, 68, 68, 1)',
+                    'rgba(249, 115, 22, 1)',
+                    'rgba(234, 179, 8, 1)',
+                    'rgba(34, 197, 94, 1)',
+                    'rgba(16, 185, 129, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

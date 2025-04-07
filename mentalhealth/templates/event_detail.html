@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ event.title }} | MindWell{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        {% if event.image %}
+        <img src="{{ event.image.url }}" alt="{{ event.title }}" class="w-full h-64 object-cover">
+        {% endif %}
+        
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        {{ event.start_time|date:"F j, Y" }}
+                    </span>
+                    <span class="ml-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                        {{ event.start_time|time }} - {{ event.end_time|time }}
+                    </span>
+                </div>
+                {% if event.organizer == request.user %}
+                <a href="{% url 'admin:community_event_change' event.id %}" 
+                   class="text-sm text-blue-600 hover:text-blue-500">
+                    Manage Event
+                </a>
+                {% endif %}
+            </div>
+            
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ event.title }}</h1>
+            
+            <div class="flex items-center text-sm text-gray-500 mb-6">
+                <span>Organized by {{ event.organizer.username }}</span>
+                {% if event.is_virtual %}
+                <span class="mx-2">•</span>
+                <span>Virtual Event</span>
+                {% endif %}
+            </div>
+            
+            <div class="prose max-w-none mb-8">
+                {{ event.description|linebreaks }}
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Event Details</h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        {% if event.is_virtual %}
+                        <li class="flex items-start">
+                            <span class="mr-2">🔗</span>
+                            <span>
+                                <a href="{{ event.meeting_link }}" target="_blank" class="text-blue-600 hover:text-blue-500">
+                                    Join Virtual Event
+                                </a>
+                            </span>
+                        </li>
+                        {% else %}
+                        <li class="flex items-start">
+                            <span class="mr-2">📍</span>
+                            <span>{{ event.location }}</span>
+                        </li>
+                        {% endif %}
+                        <li class="flex items-start">
+                            <span class="mr-2">🕒</span>
+                            <span>{{ event.start_time|date:"l, F j, Y" }}<br>
+                                {{ event.start_time|time }} - {{ event.end_time|time }}
+                            </span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="mr-2">👥</span>
+                            <span>{{ event.attendees.count }} people attending</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Attendees</h3>
+                    {% if event.attendees.all %}
+                    <ul class="space-y-2">
+                        {% for attendee in event.attendees.all|slice:":5" %}
+                        <li class="flex items-center">
+                            <span class="inline-block h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                                {{ attendee.username|first|upper }}
+                            </span>
+                            <span class="ml-2 text-sm text-gray-700">{{ attendee.username }}</span>
+                        </li>
+                        {% endfor %}
+                        {% if event.attendees.count > 5 %}
+                        <li class="text-sm text-gray-500">
+                            + {{ event.attendees.count|add:"-5" }} more
+                        </li>
+                        {% endif %}
+                    </ul>
+                    {% else %}
+                    <p class="text-sm text-gray-500">No attendees yet. Be the first!</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if request.user.is_authenticated %}
+            <form action="{% url 'event_rsvp' event.id %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="w-full md:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white {% if is_attending %}bg-red-600 hover:bg-red-700{% else %}bg-blue-600 hover:bg-blue-700{% endif %} focus:outline-none focus:ring-2 focus:ring-offset-2 {% if is_attending %}focus:ring-red-500{% else %}focus:ring-blue-500{% endif %}">
+                    {% if is_attending %}
+                    Cancel RSVP
+                    {% else %}
+                    RSVP to this Event
+                    {% endif %}
+                </button>
+            </form>
+            {% else %}
+            <div class="text-center">
+                <p class="text-gray-500 mb-4">You must be logged in to RSVP</p>
+                <a href="{% url 'login' %}?next={{ request.path }}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Log In
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

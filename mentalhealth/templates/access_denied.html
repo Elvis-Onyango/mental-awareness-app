@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Access Denied</title>
+</head>
+<body>
+    <h1>403 Access Denied</h1>
+    <p>You don't have permission to access this page.</p>
+    {% if message %}
+    <p>{{ message }}</p>
+    {% endif %}
+    <a href="{% url 'home' %}">Return to Home</a>
+</body>
+</html>

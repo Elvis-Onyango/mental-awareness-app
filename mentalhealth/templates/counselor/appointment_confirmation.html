@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Appointment Confirmation</h1>
+    
+    <div class="alert alert-success">
+        <strong>Success!</strong> Your appointment has been successfully booked.
+    </div>
+
+    <a href="{% url 'counselor_list' %}" class="btn btn-primary">Go back to Counselors</a>
+</div>
+{% endblock %}

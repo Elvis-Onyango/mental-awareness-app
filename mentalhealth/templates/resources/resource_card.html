@@ -1,0 +1,152 @@
+{% load youtube_filters %}
+<div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col border border-gray-200">
+    <!-- Video Thumbnail/Preview -->
+    {% if resource.resource_type == 'VIDEO' %}
+    <div class="relative w-full overflow-hidden" style="padding-top: 56.25%;">
+        {% if resource.video_file and resource.thumbnail %}
+        <img src="{{ resource.thumbnail.url }}" alt="{{ resource.title }}" 
+             class="absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 hover:opacity-90">
+        <button class="absolute inset-0 flex items-center justify-center group" 
+                onclick="previewVideo(this, '{{ resource.video_file.url }}')">
+            <div class="w-16 h-16 bg-blue-600 bg-opacity-80 rounded-full flex items-center justify-center transform transition-all duration-300 group-hover:bg-opacity-100 group-hover:scale-110">
+                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path>
+                </svg>
+            </div>
+        </button>
+        {% elif resource.video_embed_code %}
+            {% with yt_id=resource.video_embed_code|youtube_id %}
+                {% if yt_id %}
+                <img src="https://img.youtube.com/vi/{{ yt_id }}/hqdefault.jpg" 
+                     alt="{{ resource.title }}"
+                     class="absolute top-0 left-0 w-full h-full object-cover">
+                <a href="{% url 'resource_detail' resource.id %}" class="absolute inset-0 flex items-center justify-center group">
+                    <div class="w-16 h-16 bg-blue-600 bg-opacity-80 rounded-full flex items-center justify-center transform transition-all duration-300 group-hover:bg-opacity-100 group-hover:scale-110">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path>
+                        </svg>
+                    </div>
+                </a>
+                {% else %}
+                <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-gray-100">
+                    <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path>
+                    </svg>
+                </div>
+                {% endif %}
+            {% endwith %}
+        {% else %}
+        <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-gray-100">
+            <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path>
+            </svg>
+        </div>
+        {% endif %}
+    </div>
+    {% elif resource.thumbnail %}
+    <img src="{{ resource.thumbnail.url }}" alt="{{ resource.title }}" 
+         class="w-full h-48 object-cover transition-opacity duration-300 hover:opacity-90">
+    {% else %}
+    <div class="w-full h-48 bg-gray-100 flex items-center justify-center">
+        <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+        </svg>
+    </div>
+    {% endif %}
+    
+    <!-- Card Content -->
+    <div class="p-4 flex-grow">
+        <div class="flex items-center mb-2">
+            <span class="inline-block px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full">
+                {{ resource.get_resource_type_display }}
+            </span>
+            {% if resource.duration %}
+            <span class="ml-2 text-xs text-gray-500">
+                {{ resource.duration }}
+            </span>
+            {% endif %}
+        </div>
+        
+        <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
+            <a href="{% url 'resource_detail' resource.id %}">
+                {{ resource.title }}
+            </a>
+        </h3>
+        
+        <p class="text-gray-600 text-sm mb-3 line-clamp-3">
+            {{ resource.content|truncatechars:120 }}
+        </p>
+    </div>
+    
+    <!-- Card Footer -->
+    <div class="px-4 pb-4">
+        <a href="{% url 'resource_detail' resource.id %}" 
+           class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
+            View Details
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </a>
+    </div>
+</div>
+
+<!-- Video Preview Modal -->
+<div id="videoModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-90">
+    <div class="relative w-full max-w-4xl mx-4">
+        <button onclick="closeModal()" class="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        <video id="modalVideo" controls class="w-full" style="max-height: 80vh;">
+            Your browser does not support HTML5 video.
+        </video>
+    </div>
+</div>
+
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
+
+<script>
+    function previewVideo(button, videoUrl) {
+        const modal = document.getElementById('videoModal');
+        const video = document.getElementById('modalVideo');
+        
+        video.src = videoUrl;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Play the video when modal opens
+        video.play().catch(e => console.log('Autoplay prevented:', e));
+    }
+    
+    function closeModal() {
+        const modal = document.getElementById('videoModal');
+        const video = document.getElementById('modalVideo');
+        
+        video.pause();
+        video.currentTime = 0;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    
+    // Close modal with ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+</script>

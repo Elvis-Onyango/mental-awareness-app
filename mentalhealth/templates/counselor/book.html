@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Booking Header Card -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            {% if counselor.user.profile_picture %}
+                            <img src="{{ counselor.user.profile_picture.url }}" 
+                                 class="rounded-circle me-3"
+                                 width="60" height="60"
+                                 alt="{{ counselor.user.get_full_name }}">
+                            {% else %}
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3"
+                                 style="width: 60px; height: 60px;">
+                                <i class="fas fa-user-md text-muted"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h2 class="mb-0">Book Appointment</h2>
+                            <p class="mb-0">With {{ counselor.user.get_full_name }}, {{ counselor.specialization }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Booking Container -->
+            <div class="card shadow-lg overflow-hidden">
+                <div class="row g-0">
+                    <!-- Counselor Profile Sidebar -->
+                    <div class="col-md-4 bg-light">
+                        <div class="p-4 h-100 d-flex flex-column">
+                            <!-- Counselor Profile -->
+                            <div class="text-center mb-4">
+                                {% if counselor.user.profile_picture %}
+                                <img src="{{ counselor.user.profile_picture.url }}" 
+                                     class="rounded-circle border border-3 border-primary mb-3"
+                                     width="140" height="140"
+                                     style="object-fit: cover;"
+                                     alt="{{ counselor.user.get_full_name }}">
+                                {% else %}
+                                <div class="rounded-circle border border-3 border-primary bg-light d-flex align-items-center justify-content-center mb-3"
+                                     style="width: 140px; height: 140px;">
+                                    <i class="fas fa-user-md fa-3x text-muted"></i>
+                                </div>
+                                {% endif %}
+                                
+                                <h4>{{ counselor.user.get_full_name }}</h4>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-star text-warning"></i>
+                                    {{ counselor.specialization }}
+                                </p>
+                                <p class="text-muted small">
+                                    <i class="fas fa-certificate text-primary"></i>
+                                    {{ counselor.qualifications|truncatewords:6 }}
+                                </p>
+                            </div>
+                            
+                            <!-- Counselor Details -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-briefcase fa-fw"></i>
+                                    </div>
+                                    <div>
+                                        <strong>{{ counselor.years_of_experience }} years</strong> experience
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-clock fa-fw"></i>
+                                    </div>
+                                    <div>
+                                        Available: {{ counselor.available_hours }}
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-globe fa-fw"></i>
+                                    </div>
+                                    <div>
+                                        {{ counselor.user.institution|default:"Online Sessions" }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr class="my-4">
+                            
+                            <!-- Available Slots -->
+                            <h5 class="d-flex align-items-center mb-3">
+                                <i class="fas fa-calendar-day text-primary me-2"></i>
+                                Available Slots
+                            </h5>
+                            <div class="slot-list flex-grow-1 overflow-auto">
+                                {% for slot in available_slots|slice:":8" %}
+                                <div class="slot-item p-3 mb-2 border rounded bg-white cursor-pointer transition-all hover-bg-primary hover-text-white"
+                                     data-datetime="{{ slot|date:'c' }}">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong>{{ slot|date:"D, M j" }}</strong>
+                                            <div class="text-muted small">
+                                                {{ slot|time:"g:i A" }} ({{ counselor.session_duration }} mins)
+                                            </div>
+                                        </div>
+                                        <div class="text-primary">
+                                            <i class="far fa-clock"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="alert alert-warning mb-0">
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                    No available slots currently
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Booking Form -->
+                    <div class="col-md-8">
+                        <div class="p-4 p-lg-5">
+                            <h3 class="mb-4">
+                                <i class="far fa-calendar-check text-primary me-2"></i>
+                                Appointment Details
+                            </h3>
+                            
+                            <form method="post" class="needs-validation" novalidate>
+                                {% csrf_token %}
+                                
+                                {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Date/Time Selection -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">
+                                        <i class="far fa-calendar-alt text-primary me-2"></i>
+                                        Select Date & Time
+                                    </label>
+                                    <div class="input-group has-validation">
+                                        <span class="input-group-text">
+                                            <i class="far fa-clock"></i>
+                                        </span>
+                                        {{ form.datetime }}
+                                        <div class="invalid-feedback">
+                                            Please select a valid date and time.
+                                        </div>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Counselor availability: {{ counselor.available_hours }}
+                                    </small>
+                                </div>
+                                
+                                <div class="row g-3 mb-4">
+                                    <!-- Session Type -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">
+                                            <i class="fas fa-users text-primary me-2"></i>
+                                            Session Type
+                                        </label>
+                                        {{ form.session_type }}
+                                    </div>
+                                    
+                                    <!-- Duration -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">
+                                            <i class="fas fa-stopwatch text-primary me-2"></i>
+                                            Duration (minutes)
+                                        </label>
+                                        {{ form.duration }}
+                                    </div>
+                                </div>
+                                
+                                <!-- Additional Notes -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">
+                                        <i class="far fa-edit text-primary me-2"></i>
+                                        Additional Notes
+                                    </label>
+                                    {{ form.notes }}
+                                    <small class="form-text text-muted">
+                                        Please share any specific concerns or topics you'd like to discuss.
+                                    </small>
+                                </div>
+                                
+                                <!-- Terms Agreement -->
+                                <div class="form-check mb-4">
+                                    <input class="form-check-input" type="checkbox" id="termsAgreement" required>
+                                    <label class="form-check-label small" for="termsAgreement">
+                                        I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">terms of service</a> and 
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">privacy policy</a>
+                                    </label>
+                                </div>
+                                
+                                <!-- Form Actions -->
+                                <div class="d-flex justify-content-between pt-3 border-top">
+                                    <a href="{% url 'counselor_detail' counselor.id %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-chevron-left me-2"></i> Back to Profile
+                                    </a>
+                                    <button type="submit" class="btn btn-primary px-4">
+                                        <i class="far fa-calendar-check me-2"></i> Confirm Booking
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Terms of Service</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% include 'resources/terms_of_service.html' %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Privacy Policy</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% include 'resources/privacy_policy.html' %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .slot-list {
+        max-height: 300px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+    
+    .slot-item {
+        transition: all 0.2s ease;
+    }
+    
+    .slot-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .hover-bg-primary:hover {
+        background-color: var(--bs-primary) !important;
+        border-color: var(--bs-primary) !important;
+    }
+    
+    .hover-text-white:hover {
+        color: white !important;
+    }
+    
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    
+    .transition-all {
+        transition: all 0.2s ease;
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    }
+    
+    /* Custom scrollbar for slot list */
+    .slot-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .slot-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .slot-list::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+    
+    .slot-list::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+    
+    /* Form styling */
+    .form-control, .form-select {
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+    }
+    
+    textarea.form-control {
+        min-height: 120px;
+    }
+    
+    /* Validation styling */
+    .was-validated .form-control:valid,
+    .was-validated .form-control:invalid {
+        background-position: right 1rem center;
+        padding-right: 2.5rem;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Make time slots clickable to auto-fill the datetime field
+    document.querySelectorAll('.slot-item').forEach(item => {
+        item.addEventListener('click', function() {
+            // Remove active class from all slots
+            document.querySelectorAll('.slot-item').forEach(i => {
+                i.classList.remove('bg-primary', 'text-white');
+            });
+            
+            // Add active class to clicked slot
+            this.classList.add('bg-primary', 'text-white');
+            
+            // Get the datetime from data attribute
+            const slotDateTime = this.getAttribute('data-datetime');
+            
+            // Set the value in the datetime field
+            document.getElementById('id_datetime').value = slotDateTime;
+        });
+    });
+    
+    // Form validation
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    }, false);
+    
+    // Initialize datepicker if using one
+    if (typeof $('#id_datetime').datetimepicker === 'function') {
+        $('#id_datetime').datetimepicker({
+            format: 'YYYY-MM-DD HH:mm',
+            minDate: new Date(),
+            disabledTimeIntervals: [
+                // You would add the counselor's unavailable times here
+            ]
+        });
+    }
+});
+</script>
+{% endblock %}

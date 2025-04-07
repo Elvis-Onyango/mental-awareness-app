@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Mood Tracker | MindWell{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Mood Tracker</h1>
+        <a href="{% url 'mood_entry_create' %}" 
+           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Add Detailed Entry
+        </a>
+    </div>
+
+    <!-- Quick Mood Entry -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">How are you feeling right now?</h2>
+        <form action="{% url 'quick_mood_entry' %}" method="POST" class="flex space-x-4">
+            {% csrf_token %}
+            <button type="submit" name="mood_level" value="1" 
+                    class="flex-1 py-3 px-4 rounded-lg bg-red-100 hover:bg-red-200 text-red-800 font-medium">
+                😞 Very Negative
+            </button>
+            <button type="submit" name="mood_level" value="2" 
+                    class="flex-1 py-3 px-4 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-800 font-medium">
+                😕 Negative
+            </button>
+            <button type="submit" name="mood_level" value="3" 
+                    class="flex-1 py-3 px-4 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-medium">
+                😐 Neutral
+            </button>
+            <button type="submit" name="mood_level" value="4" 
+                    class="flex-1 py-3 px-4 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium">
+                🙂 Positive
+            </button>
+            <button type="submit" name="mood_level" value="5" 
+                    class="flex-1 py-3 px-4 rounded-lg bg-green-100 hover:bg-green-200 text-green-800 font-medium">
+                😊 Very Positive
+            </button>
+        </form>
+    </div>
+
+    <!-- Mood Chart -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Your Mood Over Time</h2>
+        <div class="h-80">
+            <canvas id="moodChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Entries -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Recent Mood Entries</h2>
+        </div>
+        <ul class="divide-y divide-gray-200">
+            {% for entry in mood_entries %}
+            <li>
+                <div class="px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">
+                                {% if entry.mood_level == 1 %}😞
+                                {% elif entry.mood_level == 2 %}😕
+                                {% elif entry.mood_level == 3 %}😐
+                                {% elif entry.mood_level == 4 %}🙂
+                                {% else %}😊{% endif %}
+                            </span>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">
+                                    {{ entry.get_mood_level_display }}
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    {{ entry.recorded_at|date:"F j, Y g:i A" }}
+                                    {% if entry.related_quiz %}
+                                    • After quiz: {{ entry.related_quiz.quiz.title }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <a href="{% url 'mood_entry_update' entry.pk %}" 
+                               class="text-blue-600 hover:text-blue-500 text-sm font-medium">
+                                Edit
+                            </a>
+                            <a href="{% url 'mood_entry_delete' entry.pk %}" 
+                               class="text-red-600 hover:text-red-500 text-sm font-medium">
+                                Delete
+                            </a>
+                        </div>
+                    </div>
+                    {% if entry.notes %}
+                    <div class="mt-2 pl-11">
+                        <p class="text-sm text-gray-600">{{ entry.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </li>
+            {% empty %}
+            <li class="px-6 py-4 text-center text-gray-500">
+                No mood entries yet. Add your first entry using the buttons above.
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const moodData = JSON.parse('{{ mood_data_json|escapejs }}');
+    
+    const ctx = document.getElementById('moodChart').getContext('2d');
+    const moodChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: moodData.dates,
+            datasets: [{
+                label: 'Mood Level',
+                data: moodData.levels,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.3,
+                fill: true,
+                pointBackgroundColor: function(context) {
+                    const value = context.dataset.data[context.dataIndex];
+                    if (value >= 4) return 'rgb(16, 185, 129)';
+                    if (value <= 2) return 'rgb(239, 68, 68)';
+                    return 'rgb(234, 179, 8)';
+                },
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    min: 1,
+                    max: 5,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            const moods = {
+                                1: 'Very Negative',
+                                2: 'Negative',
+                                3: 'Neutral',
+                                4: 'Positive',
+                                5: 'Very Positive'
+                            };
+                            return moods[value];
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            const index = context.dataIndex;
+                            return moodData.notes[index] || '';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

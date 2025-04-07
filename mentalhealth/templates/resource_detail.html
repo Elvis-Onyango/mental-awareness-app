@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load youtube_filters %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white shadow-xl rounded-lg overflow-hidden">
+        <!-- Video Section -->
+        {% if resource.resource_type == 'VIDEO' %}
+        <div class="bg-black">
+            <div class="max-w-4xl mx-auto">
+                {% if resource.video_file %}
+                <video controls class="w-full" {% if resource.thumbnail %}poster="{{ resource.thumbnail.url }}"{% endif %} style="max-height: 75vh;">
+                    <source src="{{ resource.video_file.url }}" type="video/mp4">
+                    Your browser doesn't support HTML5 video.
+                </video>
+                {% elif resource.video_embed_code %}
+                <div class="aspect-w-16 aspect-h-9">
+                    {% with yt_id=resource.video_embed_code|youtube_id %}
+                        {% if yt_id %}
+                        <iframe class="w-full h-full" src="https://www.youtube.com/embed/{{ yt_id }}?rel=0" 
+                                frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen></iframe>
+                        {% else %}
+                        <div class="bg-gray-800 text-white p-4 flex items-center justify-center h-full">
+                            <div class="text-center">
+                                <p class="mb-4">Video content available at:</p>
+                                <a href="{{ resource.video_embed_code }}" target="_blank" class="text-blue-400 hover:text-blue-300 break-all">
+                                    {{ resource.video_embed_code|truncatechars:50 }}
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% elif resource.thumbnail %}
+        <img src="{{ resource.thumbnail.url }}" alt="{{ resource.title }}" class="w-full h-auto max-h-96 object-cover">
+        {% endif %}
+
+        <div class="p-8">
+            <!-- Resource Meta -->
+            <div class="flex flex-wrap items-center gap-3 mb-6">
+                <span class="px-3 py-1 rounded-full text-sm font-semibold text-blue-800 bg-blue-100">
+                    {{ resource.get_resource_type_display }}
+                </span>
+                {% if resource.category %}
+                <span class="px-3 py-1 rounded-full text-sm font-semibold text-gray-800 bg-gray-100">
+                    {{ resource.category.name }}
+                </span>
+                {% endif %}
+                {% if resource.duration %}
+                <span class="ml-auto text-sm text-gray-500">
+                    {{ resource.duration }}
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Title -->
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">{{ resource.title }}</h1>
+
+            <!-- Content -->
+            <div class="prose max-w-none mb-8">
+                {{ resource.content|linebreaks }}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-4">
+                {% if resource.resource_type == 'VIDEO' and resource.video_file %}
+                <a href="{{ resource.video_file.url }}" download
+                   class="flex items-center px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Download Video
+                </a>
+                {% endif %}
+
+                {% if resource.external_link %}
+                <a href="{{ resource.external_link }}" target="_blank" rel="noopener noreferrer"
+                   class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+                    View External Resource
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Resources -->
+    {% if related_resources %}
+    <div class="mt-16">
+        <h2 class="text-2xl font-bold mb-8">You Might Also Like</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for resource in related_resources %}
+            {% include 'resources/resource_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Similar Type Resources -->
+    {% if similar_type_resources %}
+    <div class="mt-12">
+        <h2 class="text-2xl font-bold mb-8">More {{ resource.get_resource_type_display }}s</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for resource in similar_type_resources %}
+            {% include 'resources/resource_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .aspect-w-16 {
+        position: relative;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    }
+    
+    .aspect-h-9 {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+</style>
+{% endblock %}

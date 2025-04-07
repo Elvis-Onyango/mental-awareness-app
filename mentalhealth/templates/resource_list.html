@@ -1,0 +1,95 @@
+<!-- resources/resource_list.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Search Bar -->
+    <div class="mb-8">
+        <form method="get" action="{% url 'resource_search' %}" class="flex">
+            <input type="text" name="q" value="{{ search_query }}" 
+                   placeholder="Search resources..." 
+                   class="flex-grow px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="submit" 
+                    class="bg-blue-600 text-white px-6 py-2 rounded-r-lg hover:bg-blue-700 transition">
+                Search
+            </button>
+        </form>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white shadow rounded-lg p-4 mb-8">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Category Filter -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select name="category" class="w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Type Filter -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <select name="type" class="w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="">All Types</option>
+                    {% for type in resource_types %}
+                    <option value="{{ type.0 }}" {% if selected_type == type.0 %}selected{% endif %}>
+                        {{ type.1 }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition">
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Featured Resources -->
+    {% if not search_query and not selected_category and not selected_type %}
+    <div class="mb-12">
+        <h2 class="text-2xl font-bold mb-6">Featured Resources</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for resource in featured_resources %}
+            {% include 'resources/partials/resource_card.html' with resource=resource %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- All Resources -->
+    <div>
+        <h2 class="text-2xl font-bold mb-6">
+            {% if search_query %}Search Results
+            {% elif selected_category or selected_type %}Filtered Resources
+            {% else %}All Resources{% endif %}
+        </h2>
+        
+        {% if page_obj %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for resource in page_obj %}
+            {% include 'resources/resource_card.html' with resource=resource %}
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        <div class="mt-8">
+            {% include 'resources/pagination.html' %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <p class="text-gray-500 text-lg">No resources found matching your criteria.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

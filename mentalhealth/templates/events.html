@@ -1,0 +1,22 @@
+{% extends "userdashboard.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h2>🎟 Upcoming Mental Health Events</h2>
+    <p>Stay informed with upcoming webinars and discussions.</p>
+
+    <ul class="list-group">
+        {% for event in events %}
+        <li class="list-group-item">
+            <h5>{{ event.title }}</h5>
+            <p>{{ event.description }}</p>
+            <p><strong>Date:</strong> {{ event.date }}</p>
+            <a href="{{ event.link }}" class="btn btn-primary">Join Event</a>
+        </li>
+        {% empty %}
+        <li class="list-group-item">No upcoming events.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}

@@ -1,0 +1,471 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard | MindWell{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+        <p class="text-lg text-gray-600">Manage the MindWell platform and user community</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Total Users -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Total Users</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ total_users }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Users -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">New Users (7d)</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ new_users }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Types -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">User Types</p>
+                    <div class="flex space-x-4">
+                        <div>
+                            <p class="text-xs text-gray-500">Students</p>
+                            <p class="text-lg font-semibold">{{ user_types.students }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Counselors</p>
+                            <p class="text-lg font-semibold">{{ user_types.counselors }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Admins</p>
+                            <p class="text-lg font-semibold">{{ user_types.admins }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Stats -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Content</p>
+                    <div class="flex space-x-4">
+                        <div>
+                            <p class="text-xs text-gray-500">Quizzes</p>
+                            <p class="text-lg font-semibold">{{ content_stats.quizzes }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Resources</p>
+                            <p class="text-lg font-semibold">{{ content_stats.resources }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Add this right after the Quick Stats section (before Main Content Grid) -->
+<div class="bg-white shadow rounded-lg p-6 mb-8">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">User Analytics</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- User Growth Chart -->
+        <div>
+            <h3 class="text-md font-medium text-gray-700 mb-2">User Growth (30 days)</h3>
+            <canvas id="userGrowthChart" class="w-full h-64"></canvas>
+        </div>
+        
+        <!-- User Type Distribution -->
+        <div>
+            <h3 class="text-md font-medium text-gray-700 mb-2">User Distribution</h3>
+            <canvas id="userTypeChart" class="w-full h-64"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Add this right after the Recent Users section in Left Column -->
+<div class="bg-white shadow rounded-lg p-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">Mood Trends</h2>
+    <canvas id="moodTrendsChart" class="w-full h-64"></canvas>
+    <div class="mt-4 grid grid-cols-5 gap-2 text-center">
+        <div>
+            <span class="text-2xl">😞</span>
+            <p class="text-xs">{{ mood_stats.1 }}%</p>
+        </div>
+        <div>
+            <span class="text-2xl">😕</span>
+            <p class="text-xs">{{ mood_stats.2 }}%</p>
+        </div>
+        <div>
+            <span class="text-2xl">😐</span>
+            <p class="text-xs">{{ mood_stats.3 }}%</p>
+        </div>
+        <div>
+            <span class="text-2xl">🙂</span>
+            <p class="text-xs">{{ mood_stats.4 }}%</p>
+        </div>
+        <div>
+            <span class="text-2xl">😊</span>
+            <p class="text-xs">{{ mood_stats.5 }}%</p>
+        </div>
+    </div>
+</div>
+
+<!-- Add this right before the Quick Actions section in Right Column -->
+<div class="bg-white shadow rounded-lg p-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">Quiz Performance</h2>
+    <canvas id="quizPerformanceChart" class="w-full h-48"></canvas>
+    <div class="mt-4 flex justify-between text-sm">
+        <span class="text-green-600">Avg. Score: {{ quiz_stats.avg_score }}%</span>
+        <span class="text-blue-600">Completion Rate: {{ quiz_stats.completion_rate }}%</span>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Pending Approvals -->
+            {% if pending_counselors %}
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Pending Counselor Approvals</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for counselor in pending_counselors %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            {% if counselor.user.profile_picture %}
+                                            <img class="h-10 w-10 rounded-full" src="{{ counselor.user.profile_picture.url }}" alt="">
+                                            {% else %}
+                                            <span class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                                                {{ counselor.user.username|first|upper }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ counselor.user.get_full_name|default:counselor.user.username }}</div>
+                                            <div class="text-sm text-gray-500">{{ counselor.user.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ counselor.specialization }}</div>
+                                    <div class="text-sm text-gray-500">{{ counselor.years_of_experience }} years experience</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <a href="{% url 'admin:accounts_counselorprofile_change' counselor.id %}" class="text-blue-600 hover:text-blue-900 mr-3">Review</a>
+                                    <a href="#" class="text-green-600 hover:text-green-900 mr-3">Approve</a>
+                                    <a href="#" class="text-red-600 hover:text-red-900">Reject</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Recent Users -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Recent Users</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for user in recent_users %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            {% if user.profile_picture %}
+                                            <img class="h-10 w-10 rounded-full" src="{{ user.profile_picture.url }}" alt="">
+                                            {% else %}
+                                            <span class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                                                {{ user.username|first|upper }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
+                                            <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                              {% if user.user_type == 'STUDENT' %}bg-green-100 text-green-800
+                                              {% elif user.user_type == 'COUNSELOR' %}bg-blue-100 text-blue-800
+                                              {% else %}bg-purple-100 text-purple-800{% endif %}">
+                                        {{ user.get_user_type_display }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ user.date_joined|date:"M d, Y" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900">Manage</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200">
+                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-500">
+                        View all users →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="space-y-8">
+            <!-- Recent Quiz Attempts -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Recent Quiz Attempts</h2>
+                </div>
+                <ul class="divide-y divide-gray-200">
+                    {% for attempt in recent_quiz_attempts %}
+                    <li class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ attempt.user.username }}</p>
+                                <p class="text-sm text-gray-500">{{ attempt.quiz.title }}</p>
+                            </div>
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                      {% if attempt.score >= attempt.quiz.passing_score %}bg-green-100 text-green-800
+                                      {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ attempt.score|floatformat:0 }}%
+                            </span>
+                        </div>
+                        <div class="mt-1 text-xs text-gray-500">
+                            {{ attempt.completed_at|timesince }} ago
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="px-6 py-4 text-center text-gray-500">
+                        No quiz attempts yet.
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="px-6 py-4 border-t border-gray-200">
+                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-500">
+                        View all attempts →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Mood Entries -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Recent Mood Entries</h2>
+                </div>
+                <ul class="divide-y divide-gray-200">
+                    {% for entry in recent_mood_entries %}
+                    <li class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ entry.user.username }}</p>
+                                <p class="text-sm text-gray-500">{{ entry.get_mood_level_display }}</p>
+                            </div>
+                            <span class="text-xl">
+                                {% if entry.mood_level == 1 %}😞
+                                {% elif entry.mood_level == 2 %}😕
+                                {% elif entry.mood_level == 3 %}😐
+                                {% elif entry.mood_level == 4 %}🙂
+                                {% else %}😊{% endif %}
+                            </span>
+                        </div>
+                        {% if entry.notes %}
+                        <div class="mt-1 text-xs text-gray-600 line-clamp-2">
+                            {{ entry.notes }}
+                        </div>
+                        {% endif %}
+                        <div class="mt-1 text-xs text-gray-500">
+                            {{ entry.recorded_at|timesince }} ago
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="px-6 py-4 text-center text-gray-500">
+                        No mood entries yet.
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="px-6 py-4 border-t border-gray-200">
+                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-500">
+                        View all entries →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+                <div class="space-y-3">
+                    <a href="#" class="block w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 text-center">
+                        Add New User
+                    </a>
+                    <a href="#" class="block w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 text-center">
+                        Create New Quiz
+                    </a>
+                    <a href="#" class="block w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 text-center">
+                        Add Resource
+                    </a>
+                    <a href="#" class="block w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 text-center">
+                        Schedule Event
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // User Growth Chart
+    const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+    new Chart(userGrowthCtx, {
+        type: 'line',
+        data: {
+            labels: {{ user_growth.labels|safe }},
+            datasets: [{
+                label: 'New Users',
+                data: {{ user_growth.data|safe }},
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderColor: 'rgba(59, 130, 246, 0.8)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // User Type Chart
+    const userTypeCtx = document.getElementById('userTypeChart').getContext('2d');
+    new Chart(userTypeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Students', 'Counselors', 'Admins'],
+            datasets: [{
+                data: [{{ user_types.students }}, {{ user_types.counselors }}, {{ user_types.admins }}],
+                backgroundColor: ['#3B82F6', '#10B981', '#8B5CF6'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '70%',
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    // Mood Trends Chart
+    const moodTrendsCtx = document.getElementById('moodTrendsChart').getContext('2d');
+    new Chart(moodTrendsCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Very Low', 'Low', 'Neutral', 'Good', 'Excellent'],
+            datasets: [{
+                data: {{ mood_stats.values|safe }},
+                backgroundColor: [
+                    'rgba(239, 68, 68, 0.7)',
+                    'rgba(249, 115, 22, 0.7)',
+                    'rgba(234, 179, 8, 0.7)',
+                    'rgba(34, 197, 94, 0.7)',
+                    'rgba(16, 185, 129, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(239, 68, 68, 1)',
+                    'rgba(249, 115, 22, 1)',
+                    'rgba(234, 179, 8, 1)',
+                    'rgba(34, 197, 94, 1)',
+                    'rgba(16, 185, 129, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Quiz Performance Chart
+    const quizPerformanceCtx = document.getElementById('quizPerformanceChart').getContext('2d');
+    new Chart(quizPerformanceCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ quiz_stats.top_quizzes|safe }},
+            datasets: [{
+                label: 'Average Score',
+                data: {{ quiz_stats.top_scores|safe }},
+                backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                borderColor: 'rgba(99, 102, 241, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, max: 100 } }
+        }
+    });
+</script>
+{% endblock %}

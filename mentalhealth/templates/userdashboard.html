@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | MindWell{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Welcome Section -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome back, {{ request.user.username }}!</h1>
+        <p class="text-lg text-gray-600">Here's what's happening with your mental wellness journey.</p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <a href="{% url 'quiz_list' %}" class="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow flex flex-col items-center">
+            <div class="bg-blue-100 p-3 rounded-full mb-2">
+                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            </div>
+            <span class="text-sm font-medium text-center">Take a Quiz</span>
+        </a>
+        
+        <a href="{% url 'mood_dashboard' %}" class="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow flex flex-col items-center">
+            <div class="bg-green-100 p-3 rounded-full mb-2">
+                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <span class="text-sm font-medium text-center">Log Mood</span>
+        </a>
+        
+        <a href="{% url 'resource_list' %}" class="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow flex flex-col items-center">
+            <div class="bg-purple-100 p-3 rounded-full mb-2">
+                <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            </div>
+            <span class="text-sm font-medium text-center">Resources</span>
+        </a>
+        
+        <a href="{% url 'forum_list' %}" class="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow flex flex-col items-center">
+            <div class="bg-yellow-100 p-3 rounded-full mb-2">
+                <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+            </div>
+            <span class="text-sm font-medium text-center">Community</span>
+        </a>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Mood Tracking -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Your Mood Trends</h2>
+                    <a href="{% url 'mood_dashboard' %}" class="text-sm text-blue-600 hover:text-blue-500">View All</a>
+                </div>
+                <div class="h-64">
+                    <canvas id="moodChart"></canvas>
+                </div>
+                <div class="mt-4 grid grid-cols-5 gap-2">
+                    <button class="py-2 rounded bg-red-100 text-red-800 flex flex-col items-center">
+                        <span class="text-xl">😞</span>
+                        <span class="text-xs">Very Negative</span>
+                    </button>
+                    <button class="py-2 rounded bg-orange-100 text-orange-800 flex flex-col items-center">
+                        <span class="text-xl">😕</span>
+                        <span class="text-xs">Negative</span>
+                    </button>
+                    <button class="py-2 rounded bg-yellow-100 text-yellow-800 flex flex-col items-center">
+                        <span class="text-xl">😐</span>
+                        <span class="text-xs">Neutral</span>
+                    </button>
+                    <button class="py-2 rounded bg-blue-100 text-blue-800 flex flex-col items-center">
+                        <span class="text-xl">🙂</span>
+                        <span class="text-xs">Positive</span>
+                    </button>
+                    <button class="py-2 rounded bg-green-100 text-green-800 flex flex-col items-center">
+                        <span class="text-xl">😊</span>
+                        <span class="text-xs">Very Positive</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Quiz Results -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-900">Recent Quiz Results</h2>
+                    <a href="{% url 'quiz_history' %}" class="text-sm text-blue-600 hover:text-blue-500">View All</a>
+                </div>
+                <ul class="divide-y divide-gray-200">
+                    {% for quiz in recent_quizzes %}
+                    <li class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ quiz.quiz.title }}</p>
+                                <p class="text-sm text-gray-500">{{ quiz.completed_at|date:"M j, Y" }}</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="px-3 py-1 rounded-full text-sm font-medium 
+                                            {% if quiz.score >= quiz.quiz.passing_score %}bg-green-100 text-green-800
+                                            {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ quiz.score|floatformat:0 }}%
+                                </span>
+                                <a href="{% url 'quiz_results' quiz.id %}" class="ml-2 text-blue-600 hover:text-blue-500">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="px-6 py-4 text-center text-gray-500">
+                        No quiz attempts yet. <a href="{% url 'quiz_list' %}" class="text-blue-600 hover:text-blue-500">Take your first quiz</a>.
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="space-y-8">
+            <!-- Upcoming Events -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-900">Upcoming Events</h2>
+                    <a href="{% url 'event_list' %}" class="text-sm text-blue-600 hover:text-blue-500">View All</a>
+                </div>
+                <ul class="divide-y divide-gray-200">
+                    {% for event in upcoming_events %}
+                    <li class="px-6 py-4">
+                        <a href="{% url 'event_detail' event.id %}" class="block">
+                            <p class="text-sm font-medium text-gray-900">{{ event.title }}</p>
+                            <p class="text-sm text-gray-500">{{ event.start_time|date:"M j" }} • {{ event.start_time|time }}</p>
+                            <p class="mt-1 text-sm text-gray-600 line-clamp-2">{{ event.description }}</p>
+                        </a>
+                    </li>
+                    {% empty %}
+                    <li class="px-6 py-4 text-center text-gray-500">
+                        No upcoming events. <a href="{% url 'event_list' %}" class="text-blue-600 hover:text-blue-500">Browse events</a>.
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Recommended Resources -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-900">Recommended for You</h2>
+                    <a href="{% url 'resource_list' %}" class="text-sm text-blue-600 hover:text-blue-500">View All</a>
+                </div>
+                <ul class="divide-y divide-gray-200">
+                    {% for resource in recommended_resources %}
+                    <li class="px-6 py-4">
+                        <a href="{% url 'resource_detail' resource.id %}" class="block">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                                    {{ resource.resource_type|slice:":1" }}
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-900">{{ resource.title }}</p>
+                                    <p class="text-sm text-gray-500">{{ resource.get_resource_type_display }}</p>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+                    {% empty %}
+                    <li class="px-6 py-4 text-center text-gray-500">
+                        No recommendations available.
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Quick Wellness Check -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Wellness Check</h2>
+                <p class="text-gray-600 mb-4">How are you feeling right now?</p>
+                <div class="grid grid-cols-5 gap-2">
+                    <button class="py-2 rounded bg-red-100 hover:bg-red-200 flex flex-col items-center">
+                        <span class="text-xl">😞</span>
+                        <span class="text-xs mt-1">Very Bad</span>
+                    </button>
+                    <button class="py-2 rounded bg-orange-100 hover:bg-orange-200 flex flex-col items-center">
+                        <span class="text-xl">😕</span>
+                        <span class="text-xs mt-1">Bad</span>
+                    </button>
+                    <button class="py-2 rounded bg-yellow-100 hover:bg-yellow-200 flex flex-col items-center">
+                        <span class="text-xl">😐</span>
+                        <span class="text-xs mt-1">Okay</span>
+                    </button>
+                    <button class="py-2 rounded bg-blue-100 hover:bg-blue-200 flex flex-col items-center">
+                        <span class="text-xl">🙂</span>
+                        <span class="text-xs mt-1">Good</span>
+                    </button>
+                    <button class="py-2 rounded bg-green-100 hover:bg-green-200 flex flex-col items-center">
+                        <span class="text-xl">😊</span>
+                        <span class="text-xs mt-1">Great</span>
+                    </button>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'mood_dashboard' %}" class="text-sm text-blue-600 hover:text-blue-500">Add more details about your mood</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const moodData = JSON.parse('{{ mood_data_json|escapejs }}');
+    
+    const ctx = document.getElementById('moodChart').getContext('2d');
+    const moodChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: moodData.dates,
+            datasets: [{
+                label: 'Mood Level',
+                data: moodData.levels,
+                borderColor: 'rgb(79, 70, 229)',
+                backgroundColor: 'rgba(79, 70, 229, 0.05)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: function(context) {
+                    const value = context.dataset.data[context.dataIndex];
+                    if (value >= 4) return 'rgb(16, 185, 129)';
+                    if (value <= 2) return 'rgb(239, 68, 68)';
+                    return 'rgb(234, 179, 8)';
+                },
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    min: 1,
+                    max: 5,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            const moods = {
+                                1: '😞',
+                                2: '😕',
+                                3: '😐',
+                                4: '🙂',
+                                5: '😊'
+                            };
+                            return moods[value];
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Quick mood buttons functionality
+    document.querySelectorAll('.grid.grid-cols-5 button').forEach(button => {
+        button.addEventListener('click', function() {
+            // In a real implementation, this would send an AJAX request
+            // to save the mood entry. For now, just show feedback.
+            const moodText = this.querySelector('span:nth-child(2)').textContent;
+            alert(`Thanks for sharing! You're feeling "${moodText}" today.`);
+        });
+    });
+</script>
+{% endblock %}

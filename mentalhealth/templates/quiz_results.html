@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Results: {{ attempt.quiz.title }} | MindWell{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <!-- Results Header -->
+        <div class="bg-{% if passed %}green{% else %}red{% endif %}-600 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-white">Quiz Results</h2>
+                <span class="text-white text-lg font-medium">
+                    Score: {{ score_percentage }}%
+                </span>
+            </div>
+        </div>
+        
+        <!-- Results Summary -->
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900 mb-2">{{ attempt.quiz.title }}</h3>
+            <p class="text-gray-600 mb-4">Completed on {{ attempt.completed_at|date:"F j, Y" }}</p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-500">Questions</p>
+                    <p class="text-xl font-semibold">{{ attempt.quiz.questions.count }}</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-500">Time Taken</p>
+                    <p class="text-xl font-semibold">
+                        {% if attempt.duration %}
+                            {{ attempt.duration }} minutes
+                        {% else %}
+                            --
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="text-center py-4">
+                <p class="text-lg font-medium mb-2">
+                    You {% if passed %}passed{% else %}did not pass{% endif %} this quiz
+                </p>
+                <p class="text-gray-600">
+                    Passing score: {{ attempt.quiz.passing_score }}%
+                </p>
+            </div>
+        </div>
+        
+        <!-- Question Review -->
+        <div class="p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Question Review</h3>
+            
+            <div class="space-y-6">
+                {% for response in responses %}
+                <div class="border border-gray-200 rounded-lg p-4 {% if response.points_earned == response.question.points %}bg-green-50{% else %}bg-red-50{% endif %}">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-medium text-gray-900">Question {{ forloop.counter }}</h4>
+                        <span class="text-sm font-medium {% if response.points_earned == response.question.points %}text-green-800{% else %}text-red-800{% endif %}">
+                            {{ response.points_earned|default:0 }}/{{ response.question.points }} points
+                        </span>
+                    </div>
+                    <p class="text-gray-700 mb-3">{{ response.question.text }}</p>
+                    
+                    {% if response.question.question_type == 'OE' %}
+                        <div class="mb-2">
+                            <p class="text-sm text-gray-500">Your response:</p>
+                            <p class="text-gray-700 bg-white p-2 rounded border border-gray-200">{{ response.text_response }}</p>
+                        </div>
+                    {% else %}
+                        <div class="mb-2">
+                            <p class="text-sm text-gray-500">Your answer:</p>
+                            <p class="text-gray-700">{{ response.selected_option.text|default:"No answer selected" }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if response.question.explanation %}
+                        <div class="bg-blue-50 p-3 rounded">
+                            <p class="text-sm text-blue-700">{{ response.question.explanation }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-6 flex justify-between">
+        <a href="{% url 'quiz_list' %}" 
+           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Back to Quizzes
+        </a>
+        <a href="{% url 'quiz_detail' attempt.quiz.id %}" 
+           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Retake Quiz
+        </a>
+    </div>
+    <!-- Add to quiz_results.html -->
+<div class="mt-8 bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 bg-purple-600 text-white">
+        <h3 class="text-lg font-medium">How are you feeling after this quiz?</h3>
+    </div>
+    <div class="p-6">
+        <form action="{% url 'mood_entry_create' %}" method="GET">
+            <input type="hidden" name="related_quiz" value="{{ attempt.id }}">
+            <div class="grid grid-cols-5 gap-2 mb-4">
+                {% for value, text in MOOD_CHOICES %}
+                <button type="submit" name="mood_level" value="{{ value }}" 
+                        class="flex flex-col items-center p-2 rounded-lg hover:bg-gray-100">
+                    <span class="text-2xl mb-1">
+                        {% if value == 1 %}😞
+                        {% elif value == 2 %}😕
+                        {% elif value == 3 %}😐
+                        {% elif value == 4 %}🙂
+                        {% else %}😊{% endif %}
+                    </span>
+                    <span class="text-xs">{{ text }}</span>
+                </button>
+                {% endfor %}
+            </div>
+            <p class="text-sm text-gray-500 text-center">
+                Recording your mood helps track your mental well-being over time.
+            </p>
+        </form>
+    </div>
+</div>
+</div>
+{% endblock %}

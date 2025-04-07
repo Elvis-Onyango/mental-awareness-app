@@ -1,0 +1,318 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="{% if request.user.is_authenticated and request.user.user_type == 'COUNSELOR' %}counselor-theme{% endif %}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MindCare - Mental Health Awareness{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{% static 'images/favicon.ico' %}">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        secondary: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome (optional) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        .counselor-theme {
+            --color-primary-500: #7c3aed;
+            --color-primary-600: #6d28d9;
+        }
+        
+        /* Smooth transitions */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Prose styling for content */
+        .prose {
+            max-width: 65ch;
+        }
+        
+        .prose ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+        }
+        
+        .prose ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <nav class="bg-primary-600 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <a href="{% url 'user_dashboard' %}" class="flex items-center space-x-2">
+                        <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="text-xl font-bold">MindCare</span>
+                    </a>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'user_dashboard' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-500 transition">Dashboard</a>
+                        <a href="{% url 'counselor_list' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-500 transition">Counselors</a>
+                        <a href="{% url 'quiz_list' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-500 transition">Quizzes</a>
+                        <a href="{% url 'resource_list' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-500 transition">Resources</a>
+                        <a href="{% url 'forum_list' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-500 transition">Community</a>
+                        
+                        <!-- User Dropdown -->
+                        <div class="relative ml-3">
+                            <button id="user-menu-button" class="flex items-center space-x-1 text-sm rounded-full focus:outline-none">
+                                {% if user.profile_picture %}
+                                    <img class="h-8 w-8 rounded-full" src="{{ user.profile_picture.url }}" alt="Profile">
+                                {% else %}
+                                    <span class="h-8 w-8 rounded-full bg-primary-400 flex items-center justify-center text-white">
+                                        {{ user.username|first|upper }}
+                                    </span>
+                                {% endif %}
+                                <span class="hidden md:inline">{{ user.username }}</span>
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            
+                            <!-- Dropdown Menu -->
+                            <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 py-1 z-50">
+                                <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
+                                <a href="{% url 'wellness_journey' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Wellness Journey</a>
+                                {% if user.user_type == 'COUNSELOR' %}
+                                    <a href="{% url 'counselor_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Counselor Dashboard</a>
+                                {% endif %}
+                                <div class="border-t border-gray-200"></div>
+                                <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-500 transition">Login</a>
+                        <a href="{% url 'signup' %}" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-primary-600 hover:bg-gray-100 transition">Sign Up</a>
+                    {% endif %}
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-white hover:bg-primary-500 focus:outline-none">
+                        <svg class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-primary-700 pb-3">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'user_dashboard' %}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-primary-500">Dashboard</a>
+                    <a href="{% url 'quiz_list' %}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-primary-500">Quizzes</a>
+                    <a href="{% url 'resource_list' %}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-primary-500">Resources</a>
+                    <a href="{% url 'forum_list' %}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-primary-500">Community</a>
+                    <a href="{% url 'profile' %}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-primary-500">Profile</a>
+                    <a href="{% url 'logout' %}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-primary-500">Sign out</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-primary-500">Login</a>
+                    <a href="{% url 'signup' %}" class="block px-3 py-2 rounded-md text-base font-medium bg-white text-primary-600 hover:bg-gray-100">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages/Notifications -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        {% for message in messages %}
+        <div class="rounded-md {% if message.tags == 'error' %}bg-red-50 border-l-4 border-red-400 p-4{% elif message.tags == 'success' %}bg-green-50 border-l-4 border-green-400 p-4{% else %}bg-blue-50 border-l-4 border-blue-400 p-4{% endif %}">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    {% if message.tags == 'error' %}
+                        <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    {% elif message.tags == 'success' %}
+                        <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                    {% else %}
+                        <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                    {% endif %}
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm {% if message.tags == 'error' %}text-red-700{% elif message.tags == 'success' %}text-green-700{% else %}text-blue-700{% endif %}">
+                        {{ message }}
+                    </p>
+                </div>
+                <div class="ml-auto pl-3">
+                    <div class="-mx-1.5 -my-1.5">
+                        <button type="button" class="inline-flex rounded-md p-1.5 {% if message.tags == 'error' %}text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600{% elif message.tags == 'success' %}text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600{% else %}text-blue-500 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600{% endif %}">
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">MindWell</h3>
+                    <p class="text-gray-400">Your mental health companion for tracking, resources, and community support.</p>
+                </div>
+                <div>
+                    <h4 class="text-md font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="{% url 'user_dashboard' %}" class="text-gray-400 hover:text-white">Dashboard</a></li>
+                        <li><a href="{% url 'quiz_list' %}" class="text-gray-400 hover:text-white">Quizzes</a></li>
+                        <li><a href="{% url 'resource_list' %}" class="text-gray-400 hover:text-white">Resources</a></li>
+                        <li><a href="{% url 'forum_list' %}" class="text-gray-400 hover:text-white">Community</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-md font-semibold mb-4">Support</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Help Center</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-md font-semibold mb-4">Connect</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-sm text-gray-400">Subscribe to our newsletter</p>
+                        <form class="mt-2 flex">
+                            <input type="email" placeholder="Your email" class="px-3 py-2 rounded-l-md text-gray-800 w-full">
+                            <button type="submit" class="bg-primary-500 hover:bg-primary-600 px-4 py-2 rounded-r-md">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400 text-sm">
+                <p>&copy; 2025 MindCare. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // User dropdown toggle
+        document.getElementById('user-menu-button').addEventListener('click', function() {
+            document.getElementById('user-menu').classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('#user-menu-button') && !event.target.closest('#user-menu')) {
+                document.getElementById('user-menu').classList.add('hidden');
+            }
+        });
+
+        // Close message alerts
+        document.querySelectorAll('[aria-label="Close"]').forEach(button => {
+            button.addEventListener('click', function() {
+                this.closest('.rounded-md').style.display = 'none';
+            });
+        });
+
+        // Dark mode toggle (optional)
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', function() {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+            });
+
+            // Check for saved user preference
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.documentElement.classList.add('dark');
+            }
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

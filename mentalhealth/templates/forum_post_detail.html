@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}{{ post.title }} | MindWell Community{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Post Content -->
+    <div class="bg-white shadow rounded-lg overflow-hidden mb-8">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold 
+                              {% if post.category %}text-{{ post.category.color }}-800 bg-{{ post.category.color }}-100{% else %}text-gray-800 bg-gray-100{% endif %}">
+                        {% if post.category %}{{ post.category.name }}{% else %}General{% endif %}
+                    </span>
+                </div>
+                <span class="text-sm text-gray-500">
+                    {{ post.created_at|timesince }} ago
+                </span>
+            </div>
+            
+            <h1 class="text-2xl font-bold text-gray-900 mb-4">{{ post.title }}</h1>
+            
+            <div class="prose max-w-none mb-6">
+                {{ post.content|linebreaks }}
+            </div>
+            
+            <div class="flex items-center justify-between mt-4">
+                <span class="text-sm text-gray-500">
+                    Posted {% if post.is_anonymous %}anonymously{% else %}by {{ post.user.username }}{% endif %}
+                </span>
+                {% if post.user == request.user %}
+                <a href="{% url 'forum_post_edit' post.id %}" 
+                   class="text-sm text-blue-600 hover:text-blue-800">
+                    Edit Post
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Section -->
+    <div class="bg-white shadow rounded-lg overflow-hidden mb-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">
+                {{ post.comments.count }} comment{{ post.comments.count|pluralize }}
+            </h2>
+        </div>
+        
+        <!-- Comment List -->
+        <ul class="divide-y divide-gray-200">
+            {% for comment in post.comments.all %}
+            <li class="px-6 py-4">
+                <div class="flex justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-900">
+                        {% if comment.is_anonymous %}Anonymous{% else %}{{ comment.user.username }}{% endif %}
+                    </span>
+                    <span class="text-sm text-gray-500">
+                        {{ comment.created_at|timesince }} ago
+                    </span>
+                </div>
+                <div class="prose-sm max-w-none mb-2">
+                    {{ comment.content|linebreaks }}
+                </div>
+                {% if comment.user == request.user %}
+                <div class="text-right">
+                    <form method="post" action="{% url 'forum_comment_delete' comment.id %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-sm text-red-600 hover:text-red-800">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </li>
+            {% empty %}
+            <li class="px-6 py-4 text-center text-gray-500">
+                No comments yet. Be the first to comment!
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Comment Form -->
+    {% if request.user.is_authenticated %}
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Add a Comment</h3>
+        </div>
+        <div class="p-6">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-4">
+                    {{ form.content|add_class:"block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        {{ form.is_anonymous }}
+                        <label for="{{ form.is_anonymous.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                            Post anonymously
+                        </label>
+                    </div>
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Submit Comment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-4">
+        <p class="text-gray-500">
+            <a href="{% url 'login' %}?next={{ request.path }}" class="text-blue-600 hover:text-blue-800">Sign in</a> 
+            to leave a comment.
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

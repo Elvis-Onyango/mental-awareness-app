@@ -1,0 +1,58 @@
+{% extends "userdashboard.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h2>🧘‍♂️ Mindfulness & Wellness</h2>
+    <p>Take a moment to relax, breathe, and reflect.</p>
+
+    <!-- Meditation Section -->
+    <h4>🎵 Guided Meditation</h4>
+    <ul class="list-group">
+        {% for tool in tools %}
+        <li class="list-group-item">
+            <h5>{{ tool.title }}</h5>
+            <p>{{ tool.description }}</p>
+            {% if tool.audio_url %}
+            <audio controls>
+                <source src="{{ tool.audio_url }}" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+            {% endif %}
+        </li>
+        {% empty %}
+        <li class="list-group-item">No meditation tools available.</li>
+        {% endfor %}
+    </ul>
+
+    <!-- Breathing Exercise -->
+    <h4>🌬 Breathing Exercise</h4>
+    <p>Follow the animation below to sync your breathing.</p>
+    <div id="breathingCircle"></div>
+
+    <!-- Journaling Section -->
+    <h4>📖 Guided Journaling</h4>
+    <p>Write about your day using these prompts:</p>
+    <ul>
+        <li>What made you happy today?</li>
+        <li>What challenged you today?</li>
+        <li>What are you grateful for?</li>
+    </ul>
+    <textarea class="form-control" rows="5" placeholder="Start writing..."></textarea>
+</div>
+
+<style>
+    #breathingCircle {
+        width: 100px;
+        height: 100px;
+        background-color: lightblue;
+        border-radius: 50%;
+        animation: breathe 5s infinite;
+    }
+    @keyframes breathe {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.5); }
+        100% { transform: scale(1); }
+    }
+</style>
+
+{% endblock %}
