@@ -1,0 +1,154 @@
+{% extends 'custom_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Announcement: {{ announcement.title }}</h1>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-megaphone me-1"></i>
+                            Announcement Details
+                        </div>
+                        <span class="badge bg-{% if announcement.priority == 'URGENT' %}danger{% elif announcement.priority == 'HIGH' %}warning{% elif announcement.priority == 'MEDIUM' %}info{% else %}secondary{% endif %}">
+                            {{ announcement.get_priority_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Message</h5>
+                        <div class="border rounded p-3 bg-light">
+                            {{ announcement.message|linebreaks }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h5>Delivery Information</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Recipients</span>
+                                    <span>{{ announcement.recipients.count }} users</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Email Sent</span>
+                                    <span>
+                                        {% if announcement.send_email %}
+                                        <i class="bi bi-check-circle-fill text-success"></i> Yes
+                                        {% else %}
+                                        <i class="bi bi-x-circle-fill text-danger"></i> No
+                                        {% endif %}
+                                    </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Scheduled Time</span>
+                                    <span>
+                                        {% if announcement.scheduled_at %}
+                                        {{ announcement.scheduled_at|date:"M j, Y g:i a" }}
+                                        {% else %}
+                                        Immediately
+                                        {% endif %}
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Status Information</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Status</span>
+                                    <span class="badge bg-{% if announcement.is_published %}success{% else %}secondary{% endif %}">
+                                        {% if announcement.is_published %}Published{% else %}Draft{% endif %}
+                                    </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Created By</span>
+                                    <span>{{ announcement.created_by.username }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Created At</span>
+                                    <span>{{ announcement.created_at|date:"M j, Y g:i a" }}</span>
+                                </li>
+                                {% if announcement.is_published %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Published At</span>
+                                    <span>{{ announcement.published_at|date:"M j, Y g:i a" }}</span>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    {% if announcement.is_published %}
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        This announcement was published on {{ announcement.published_at|date:"M j, Y" }}.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        This announcement is a draft and has not been published yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-people me-1"></i>
+                    Recipients ({{ announcement.recipients.count }})
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                        {% for user in announcement.recipients.all %}
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ user.profile_picture.url|default:'/static/images/default-profile.png' }}" 
+                                     alt="{{ user.username }}" width="32" height="32" class="rounded-circle me-2">
+                                <div>
+                                    <h6 class="mb-0">{{ user.username }}</h6>
+                                    <small class="text-muted">{{ user.get_user_type_display }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-4 text-muted">
+                            No recipients selected
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-lightning me-1"></i>
+                    Quick Actions
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if not announcement.is_published %}
+                        <button class="btn btn-success">
+                            <i class="bi bi-send me-1"></i> Publish Now
+                        </button>
+                        {% endif %}
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil me-1"></i> Edit
+                        </a>
+                        <a href="#" class="btn btn-outline-danger">
+                            <i class="bi bi-trash me-1"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends 'custom_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Quiz Analytics: {{ quiz.title }}</h1>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-graph-up me-1"></i>
+                            Performance Overview
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown">
+                                Last 30 Days
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#">Last 7 Days</a></li>
+                                <li><a class="dropdown-item" href="#">Last 30 Days</a></li>
+                                <li><a class="dropdown-item" href="#">Last 90 Days</a></li>
+                                <li><a class="dropdown-item" href="#">All Time</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h3 class="mb-0">{{ total_attempts }}</h3>
+                                    <p class="text-muted mb-0">Total Attempts</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h3 class="mb-0">{{ avg_score|floatformat:1 }}%</h3>
+                                    <p class="text-muted mb-0">Average Score</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h3 class="mb-0">{{ completion_rate }}%</h3>
+                                    <p class="text-muted mb-0">Completion Rate</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Score Distribution</h5>
+                            <canvas id="scoreDistributionChart" height="250"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Attempts Over Time</h5>
+                            <canvas id="attemptsOverTimeChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-list-check me-1"></i>
+                    Question Performance
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Question</th>
+                                    <th>Type</th>
+                                    <th>Correct %</th>
+                                    <th>Difficulty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for question in quiz.questions.all %}
+                                <tr>
+                                    <td>{{ question.text|truncatechars:50 }}</td>
+                                    <td>{{ question.get_question_type_display }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                 style="width: 75%" aria-valuenow="75" aria-valuemin="0" 
+                                                 aria-valuemax="100">75%</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning">Medium</span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">No questions found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-people me-1"></i>
+                    Recent Attempts
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for attempt in recent_attempts %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">{{ attempt.user.username }}</h6>
+                                    <small class="text-muted">
+                                        {{ attempt.completed_at|timesince }} ago
+                                    </small>
+                                </div>
+                                <span class="badge bg-{% if attempt.score >= 70 %}success{% elif attempt.score >= 40 %}warning{% else %}danger{% endif %}">
+                                    {{ attempt.score|floatformat:0 }}%
+                                </span>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-4 text-muted">
+                            No recent attempts
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="#" class="btn btn-sm btn-outline-primary">View All Attempts</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-lightning me-1"></i>
+                    Quick Actions
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil me-1"></i> Edit Quiz
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary">
+                            <i class="bi bi-question-circle me-1"></i> Add Question
+                        </a>
+                        <a href="#" class="btn btn-outline-danger">
+                            <i class="bi bi-trash me-1"></i> Delete Quiz
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Score Distribution Chart
+    const scoreCtx = document.getElementById('scoreDistributionChart').getContext('2d');
+    new Chart(scoreCtx, {
+        type: 'bar',
+        data: {
+            labels: ['0-10%', '11-20%', '21-30%', '31-40%', '41-50%', '51-60%', '61-70%', '71-80%', '81-90%', '91-100%'],
+            datasets: [{
+                label: 'Number of Attempts',
+                data: [2, 3, 5, 8, 12, 15, 20, 18, 10, 7],
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Attempts Over Time Chart
+    const attemptsCtx = document.getElementById('attemptsOverTimeChart').getContext('2d');
+    new Chart(attemptsCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Attempts',
+                data: [12, 19, 15, 22, 18, 25],
+                fill: false,
+                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

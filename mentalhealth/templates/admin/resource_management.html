@@ -1,0 +1,201 @@
+{% extends 'custom_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="resource-form-container">
+    <h2 class="form-title">Create New Wellness Resource</h2>
+    
+    <form method="post" enctype="multipart/form-data" class="resource-form">
+        {% csrf_token %}
+        
+        <!-- General Information -->
+        <div class="form-section">
+            <h3 class="section-title">Basic Information</h3>
+            
+            <div class="form-group">
+                <label for="{{ form.title.id_for_label }}">Title*</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div class="error">{{ form.title.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.resource_type.id_for_label }}">Resource Type*</label>
+                    {{ form.resource_type }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.category.id_for_label }}">Category</label>
+                    {{ form.category }}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.content.id_for_label }}">Description/Content</label>
+                {{ form.content }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.is_featured.id_for_label }}">
+                    {{ form.is_featured }} Featured Resource
+                </label>
+            </div>
+        </div>
+        
+        <!-- Media Section (Dynamic based on resource type) -->
+        <div class="form-section" id="media-section">
+            <h3 class="section-title">Media Content</h3>
+            
+            <!-- External Link (for articles/podcasts/books) -->
+            <div class="form-group external-link-group">
+                <label for="{{ form.external_link.id_for_label }}">External Link</label>
+                {{ form.external_link }}
+                <p class="help-text">{{ form.external_link.help_text }}</p>
+            </div>
+            
+            <!-- Video Upload Fields -->
+            <div class="video-fields-group">
+                <div class="form-group">
+                    <label for="{{ form.video_file.id_for_label }}">Video File</label>
+                    {{ form.video_file }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.video_embed_code.id_for_label }}">Video Embed Code</label>
+                    {{ form.video_embed_code }}
+                    <p class="help-text">{{ form.video_embed_code.help_text }}</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.duration.id_for_label }}">Duration</label>
+                    {{ form.duration }}
+                </div>
+            </div>
+            
+            <!-- Thumbnail (for all types) -->
+            <div class="form-group">
+                <label for="{{ form.thumbnail.id_for_label }}">Thumbnail Image</label>
+                {{ form.thumbnail }}
+                {% if form.instance.thumbnail %}
+                    <div class="current-thumbnail">
+                        <p>Current:</p>
+                        <img src="{{ form.instance.thumbnail.url }}" width="100">
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Resource</button>
+            <a href="{% url 'admin_resource_management' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<!-- Dynamic form handling with JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const resourceType = document.querySelector('#{{ form.resource_type.id_for_label }}');
+    const mediaSection = document.getElementById('media-section');
+    
+    function toggleFields() {
+        const type = resourceType.value;
+        
+        // Show/hide video fields
+        const videoFields = mediaSection.querySelectorAll('.video-fields-group > div');
+        videoFields.forEach(field => {
+            field.style.display = type === 'VIDEO' ? 'block' : 'none';
+        });
+        
+        // Show/hide external link
+        const externalLinkGroup = mediaSection.querySelector('.external-link-group');
+        externalLinkGroup.style.display = ['ARTICLE', 'PODCAST', 'BOOK'].includes(type) ? 'block' : 'none';
+    }
+    
+    // Initial setup
+    toggleFields();
+    
+    // Change listener
+    resourceType.addEventListener('change', toggleFields);
+});
+</script>
+
+<style>
+.resource-form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.form-title {
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.form-section {
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.section-title {
+    color: #3498db;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+input[type="text"],
+input[type="url"],
+textarea,
+select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.help-text {
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 5px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.error {
+    color: #e74c3c;
+    font-size: 0.9em;
+}
+
+.current-thumbnail {
+    margin-top: 10px;
+}
+
+.current-thumbnail img {
+    border: 1px solid #ddd;
+    margin-top: 5px;
+}
+</style>
+{% endblock %}

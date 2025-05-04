@@ -1,0 +1,181 @@
+{% extends 'custom_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Counselor Applications</h1>
+        <div class="d-flex">
+            <form method="get" class="d-flex">
+                <div class="input-group">
+                    <input type="text" name="q" class="form-control bg-light border-0 small" 
+                           placeholder="Search applications..." value="{{ search_query }}">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-primary text-white">
+            <h6 class="m-0 font-weight-bold">
+                <i class="bi bi-people-fill me-2"></i>
+                Pending Applications
+            </h6>
+            <span class="badge bg-white text-primary rounded-pill">
+                {{ applications.count }} application{{ applications.count|pluralize }}
+            </span>
+        </div>
+        
+        <div class="card-body">
+            {% if applications %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Counselor</th>
+                            <th>Specialization</th>
+                            <th>Experience</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in applications %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ application.user.profile_picture.url|default:'/static/images/default-profile.png' }}" 
+                                         alt="{{ application.user.username }}" width="40" height="40" 
+                                         class="rounded-circle me-3 object-fit-cover">
+                                    <div>
+                                        <h6 class="mb-0">{{ application.user.get_full_name|default:application.user.username }}</h6>
+                                        <small class="text-muted">{{ application.user.email }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="d-block">{{ application.specialization }}</span>
+                                <small class="text-muted text-truncate d-block" style="max-width: 200px;">
+                                    {{ application.qualifications }}
+                                </small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info text-dark">
+                                    {{ application.years_of_experience }} year{{ application.years_of_experience|pluralize }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-warning text-dark">Pending Review</span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'admin_view_application' application.id %}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       data-bs-toggle="tooltip" title="Review details">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </a>
+                                    <a href="{% url 'admin_approve_counselor' application.id %}" 
+                                       class="btn btn-sm btn-outline-success"
+                                       data-bs-toggle="tooltip" title="Approve application">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </a>
+                                    <a href="{% url 'admin_reject_counselor' application.id %}" 
+                                       class="btn btn-sm btn-outline-danger"
+                                       data-bs-toggle="tooltip" title="Reject application">
+                                        <i class="bi bi-x-circle-fill"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="py-4">
+                    <img src="{% static 'images/no-data.svg' %}" alt="No applications" style="max-width: 200px;" class="img-fluid mb-4">
+                </div>
+                <h4 class="text-gray-600">No pending applications</h4>
+                <p class="text-muted">All counselor applications have been processed</p>
+                <a href="#" class="btn btn-primary mt-3">
+                    <i class="bi bi-arrow-repeat me-2"></i>Refresh
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if applications.has_other_pages %}
+        <div class="card-footer">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if applications.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ applications.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+                    </li>
+                    {% endif %}
+                    
+                    {% for i in applications.paginator.page_range %}
+                    {% if applications.number == i %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ i }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if search_query %}&q={{ search_query }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if applications.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ applications.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .object-fit-cover {
+        object-fit: cover;
+    }
+    .card {
+        border-radius: 0.5rem;
+    }
+    .table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+</style>
+
+<script>
+    // Enable tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

@@ -1,471 +1,496 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
 
 {% block title %}Admin Dashboard | MindWell{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-        <p class="text-lg text-gray-600">Manage the MindWell platform and user community</p>
-    </div>
-
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <!-- Total Users -->
-        <div class="bg-white shadow rounded-lg p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
+<div class="container-fluid px-0">
+    <!-- Admin Header -->
+    <header class="admin-header bg-primary text-white py-3">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-shield-lock fs-3 me-3"></i>
+                    <h1 class="h3 mb-0">Admin Dashboard</h1>
                 </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Total Users</p>
-                    <p class="text-2xl font-semibold text-gray-900">{{ total_users }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- New Users -->
-        <div class="bg-white shadow rounded-lg p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-green-100 text-green-600">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">New Users (7d)</p>
-                    <p class="text-2xl font-semibold text-gray-900">{{ new_users }}</p>
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" type="button" id="timeRangeDropdown" data-bs-toggle="dropdown">
+                        <i class="bi bi-calendar-range me-2"></i>Last 7 Days
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="?range=7">Last 7 Days</a></li>
+                        <li><a class="dropdown-item" href="?range=30">Last 30 Days</a></li>
+                        <li><a class="dropdown-item" href="?range=90">Last 90 Days</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="?range=custom">Custom Range</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
+    </header>
 
-        <!-- User Types -->
-        <div class="bg-white shadow rounded-lg p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">User Types</p>
-                    <div class="flex space-x-4">
-                        <div>
-                            <p class="text-xs text-gray-500">Students</p>
-                            <p class="text-lg font-semibold">{{ user_types.students }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs text-gray-500">Counselors</p>
-                            <p class="text-lg font-semibold">{{ user_types.counselors }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs text-gray-500">Admins</p>
-                            <p class="text-lg font-semibold">{{ user_types.admins }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Content Stats -->
-        <div class="bg-white shadow rounded-lg p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Content</p>
-                    <div class="flex space-x-4">
-                        <div>
-                            <p class="text-xs text-gray-500">Quizzes</p>
-                            <p class="text-lg font-semibold">{{ content_stats.quizzes }}</p>
-                        </div>
-                        <div>
-                            <p class="text-xs text-gray-500">Resources</p>
-                            <p class="text-lg font-semibold">{{ content_stats.resources }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Add this right after the Quick Stats section (before Main Content Grid) -->
-<div class="bg-white shadow rounded-lg p-6 mb-8">
-    <h2 class="text-xl font-semibold text-gray-900 mb-4">User Analytics</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- User Growth Chart -->
-        <div>
-            <h3 class="text-md font-medium text-gray-700 mb-2">User Growth (30 days)</h3>
-            <canvas id="userGrowthChart" class="w-full h-64"></canvas>
-        </div>
-        
-        <!-- User Type Distribution -->
-        <div>
-            <h3 class="text-md font-medium text-gray-700 mb-2">User Distribution</h3>
-            <canvas id="userTypeChart" class="w-full h-64"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Add this right after the Recent Users section in Left Column -->
-<div class="bg-white shadow rounded-lg p-6">
-    <h2 class="text-xl font-semibold text-gray-900 mb-4">Mood Trends</h2>
-    <canvas id="moodTrendsChart" class="w-full h-64"></canvas>
-    <div class="mt-4 grid grid-cols-5 gap-2 text-center">
-        <div>
-            <span class="text-2xl">😞</span>
-            <p class="text-xs">{{ mood_stats.1 }}%</p>
-        </div>
-        <div>
-            <span class="text-2xl">😕</span>
-            <p class="text-xs">{{ mood_stats.2 }}%</p>
-        </div>
-        <div>
-            <span class="text-2xl">😐</span>
-            <p class="text-xs">{{ mood_stats.3 }}%</p>
-        </div>
-        <div>
-            <span class="text-2xl">🙂</span>
-            <p class="text-xs">{{ mood_stats.4 }}%</p>
-        </div>
-        <div>
-            <span class="text-2xl">😊</span>
-            <p class="text-xs">{{ mood_stats.5 }}%</p>
-        </div>
-    </div>
-</div>
-
-<!-- Add this right before the Quick Actions section in Right Column -->
-<div class="bg-white shadow rounded-lg p-6">
-    <h2 class="text-xl font-semibold text-gray-900 mb-4">Quiz Performance</h2>
-    <canvas id="quizPerformanceChart" class="w-full h-48"></canvas>
-    <div class="mt-4 flex justify-between text-sm">
-        <span class="text-green-600">Avg. Score: {{ quiz_stats.avg_score }}%</span>
-        <span class="text-blue-600">Completion Rate: {{ quiz_stats.completion_rate }}%</span>
-    </div>
-</div>
-
-<!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Left Column -->
-        <div class="lg:col-span-2 space-y-8">
-            <!-- Pending Approvals -->
-            {% if pending_counselors %}
-            <div class="bg-white shadow rounded-lg overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-900">Pending Counselor Approvals</h2>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for counselor in pending_counselors %}
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10">
-                                            {% if counselor.user.profile_picture %}
-                                            <img class="h-10 w-10 rounded-full" src="{{ counselor.user.profile_picture.url }}" alt="">
-                                            {% else %}
-                                            <span class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
-                                                {{ counselor.user.username|first|upper }}
-                                            </span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ counselor.user.get_full_name|default:counselor.user.username }}</div>
-                                            <div class="text-sm text-gray-500">{{ counselor.user.email }}</div>
-                                        </div>
+    <!-- Main Dashboard Content -->
+    <div class="container-fluid py-4">
+        <div class="row g-4">
+            <!-- Left Column - Main Metrics -->
+            <div class="col-lg-8">
+                <!-- Quick Stats Cards -->
+                <div class="row g-3 mb-4">
+                    <!-- Total Users Card -->
+                    <div class="col-md-6 col-xl-3">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <span class="text-muted small">Total Users</span>
+                                        <h2 class="mt-1 mb-0">{{ total_users }}</h2>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ counselor.specialization }}</div>
-                                    <div class="text-sm text-gray-500">{{ counselor.years_of_experience }} years experience</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="{% url 'admin:accounts_counselorprofile_change' counselor.id %}" class="text-blue-600 hover:text-blue-900 mr-3">Review</a>
-                                    <a href="#" class="text-green-600 hover:text-green-900 mr-3">Approve</a>
-                                    <a href="#" class="text-red-600 hover:text-red-900">Reject</a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Recent Users -->
-            <div class="bg-white shadow rounded-lg overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-900">Recent Users</h2>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for user in recent_users %}
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10">
-                                            {% if user.profile_picture %}
-                                            <img class="h-10 w-10 rounded-full" src="{{ user.profile_picture.url }}" alt="">
-                                            {% else %}
-                                            <span class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
-                                                {{ user.username|first|upper }}
-                                            </span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
-                                            <div class="text-sm text-gray-500">{{ user.email }}</div>
-                                        </div>
+                                    <div class="bg-primary bg-opacity-10 p-2 rounded">
+                                        <i class="bi bi-people-fill text-primary fs-4"></i>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                              {% if user.user_type == 'STUDENT' %}bg-green-100 text-green-800
-                                              {% elif user.user_type == 'COUNSELOR' %}bg-blue-100 text-blue-800
-                                              {% else %}bg-purple-100 text-purple-800{% endif %}">
-                                        {{ user.get_user_type_display }}
+                                </div>
+                                <div class="mt-3">
+                                    <span class="badge bg-success bg-opacity-10 text-success">
+                                        <i class="bi bi-arrow-up"></i> {{ new_users }} new
                                     </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ user.date_joined|date:"M d, Y" }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="#" class="text-blue-600 hover:text-blue-900">Manage</a>
-                                </td>
-                            </tr>
+                                    <span class="badge bg-info bg-opacity-10 text-info ms-2">
+                                        {{ active_users }} active
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Distribution Card -->
+                    <div class="col-md-6 col-xl-3">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-body">
+                                <span class="text-muted small">User Distribution</span>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <div class="text-center">
+                                        <div class="text-success mb-1">
+                                            <i class="bi bi-person-fill fs-4"></i>
+                                        </div>
+                                        <h5 class="mb-0">{{ user_types.students }}</h5>
+                                        <small class="text-muted">Students</small>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-primary mb-1">
+                                            <i class="bi bi-person-badge-fill fs-4"></i>
+                                        </div>
+                                        <h5 class="mb-0">{{ user_types.counselors }}</h5>
+                                        <small class="text-muted">Counselors</small>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-warning mb-1">
+                                            <i class="bi bi-shield-lock-fill fs-4"></i>
+                                        </div>
+                                        <h5 class="mb-0">{{ user_types.admins }}</h5>
+                                        <small class="text-muted">Admins</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Counselor Stats Card -->
+                    <div class="col-md-6 col-xl-3">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <span class="text-muted small">Counselors</span>
+                                        <h2 class="mt-1 mb-0">{{ counselor_stats.total }}</h2>
+                                    </div>
+                                    <div class="bg-info bg-opacity-10 p-2 rounded">
+                                        <i class="bi bi-person-badge text-info fs-4"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <span class="badge bg-success bg-opacity-10 text-success">
+                                        {{ counselor_stats.approved }} approved
+                                    </span>
+                                    <span class="badge bg-warning bg-opacity-10 text-warning ms-2">
+                                        {{ counselor_stats.pending }} pending
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- At Risk Users Card -->
+                    <div class="col-md-6 col-xl-3">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <span class="text-muted small">At Risk Users</span>
+                                        <h2 class="mt-1 mb-0">{{ at_risk_users|length }}</h2>
+                                    </div>
+                                    <div class="bg-danger bg-opacity-10 p-2 rounded">
+                                        <i class="bi bi-exclamation-triangle-fill text-danger fs-4"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    {% if at_risk_users %}
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-danger" role="progressbar" 
+                                             style="width: {{ at_risk_users.0.risk_score }}%"></div>
+                                    </div>
+                                    <small>Highest risk: {{ at_risk_users.0.risk_score|floatformat:0 }}%</small>
+                                    {% else %}
+                                    <small class="text-muted">No at-risk users</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Growth Chart -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up text-primary me-2"></i>
+                            User Growth (30 days)
+                        </h5>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary">7d</button>
+                            <button class="btn btn-outline-secondary active">30d</button>
+                            <button class="btn btn-outline-secondary">90d</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="userGrowthChart" height="250"></canvas>
+                    </div>
+                </div>
+
+                <!-- At Risk Users Table -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                            At Risk Users
+                        </h5>
+                        <a href="{% url 'admin_at_risk_users' %}" class="btn btn-sm btn-outline-danger">
+                            View All
+                        </a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>User</th>
+                                    <th>Risk Factors</th>
+                                    <th>Last Mood</th>
+                                    <th>Last Quiz</th>
+                                    <th>Risk Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in at_risk_users|slice:":5" %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar avatar-sm me-2">
+                                                {% if user.user.profile_picture %}
+                                                <img src="{{ user.user.profile_picture.url }}" class="rounded-circle">
+                                                {% else %}
+                                                <span class="avatar-title bg-light rounded-circle">
+                                                    {{ user.user.username|first|upper }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ user.user.username }}</h6>
+                                                <small class="text-muted">{{ user.user.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-danger bg-opacity-10 text-danger mb-1">
+                                            {{ user.bad_mood_count }} low moods
+                                        </span>
+                                        <span class="badge bg-warning bg-opacity-10 text-warning">
+                                            {{ user.low_score_count }} low scores
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if user.last_mood %}
+                                        <span class="badge bg-{% if user.last_mood.mood_level <= 2 %}danger{% else %}warning{% endif %}">
+                                            {{ user.last_mood.get_mood_level_display }}
+                                        </span>
+                                        <small class="text-muted d-block">
+                                            {{ user.last_mood.recorded_at|timesince }} ago
+                                        </small>
+                                        {% else %}
+                                        <span class="text-muted">No data</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.last_quiz %}
+                                        <div class="progress" style="height: 6px;">
+                                            <div class="progress-bar bg-{% if user.last_quiz.score < 40 %}danger{% elif user.last_quiz.score < 70 %}warning{% else %}success{% endif %}" 
+                                                 role="progressbar" style="width: {{ user.last_quiz.score }}%">
+                                            </div>
+                                        </div>
+                                        <small>{{ user.last_quiz.score|floatformat:0 }}% on {{ user.last_quiz.quiz.title }}</small>
+                                        {% else %}
+                                        <span class="text-muted">No data</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-danger" role="progressbar" 
+                                                 style="width: {{ user.risk_score }}%">
+                                                {{ user.risk_score|floatformat:0 }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        <i class="bi bi-emoji-smile fs-4 d-block mb-2"></i>
+                                        No at-risk users identified
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Sidebar -->
+            <div class="col-lg-4">
+                <!-- Pending Approvals -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-person-check-fill text-warning me-2"></i>
+                            Pending Approvals
+                        </h5>
+                        <span class="badge bg-warning">{{ pending_counselors|length }}</span>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for counselor in pending_counselors|slice:":3" %}
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-sm me-3">
+                                    {% if counselor.user.profile_picture %}
+                                    <img src="{{ counselor.user.profile_picture.url }}" class="rounded-circle">
+                                    {% else %}
+                                    <span class="avatar-title bg-light rounded-circle">
+                                        {{ counselor.user.username|first|upper }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">{{ counselor.user.get_full_name }}</h6>
+                                    <small class="text-muted">{{ counselor.specialization }}</small>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                            data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{% url 'admin_view_application' counselor.id %}">Review</a></li>
+                                        <li><a class="dropdown-item text-success" href="{% url 'admin_approve_counselor' counselor.id %}">Approve</a></li>
+                                        <li><a class="dropdown-item text-danger" href="{% url 'admin_reject_counselor' counselor.id %}">Reject</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item text-center py-4 text-muted">
+                            <i class="bi bi-check-circle-fill text-success fs-4 d-block mb-2"></i>
+                            No pending approvals
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="card-footer bg-white text-center">
+                        <a href="{% url 'admin_counselor_applications' %}" class="btn btn-sm btn-outline-warning">View All</a>
+                    </div>
+                </div>
+
+                <!-- Mood Distribution -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-emoji-frown text-warning me-2"></i>
+                            Mood Distribution
+                        </h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown">
+                                By Week
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#">By Day</a></li>
+                                <li><a class="dropdown-item" href="#">By Week</a></li>
+                                <li><a class="dropdown-item" href="#">By Month</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="moodChart" height="200"></canvas>
+                        <div class="text-center mt-3">
+                            {% for level, percentage in mood_stats.percentages|enumerate_list %}
+                            <span class="badge bg-{% cycle 'danger' 'warning' 'secondary' 'info' 'success' %} me-1">
+                                {% cycle '😞' '😕' '😐' '🙂' '😊' %} {{ percentage }}%
+                            </span>
                             {% endfor %}
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
                 </div>
-                <div class="px-6 py-4 border-t border-gray-200">
-                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-500">
-                        View all users →
-                    </a>
-                </div>
-            </div>
-        </div>
 
-        <!-- Right Column -->
-        <div class="space-y-8">
-            <!-- Recent Quiz Attempts -->
-            <div class="bg-white shadow rounded-lg overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-900">Recent Quiz Attempts</h2>
-                </div>
-                <ul class="divide-y divide-gray-200">
-                    {% for attempt in recent_quiz_attempts %}
-                    <li class="px-6 py-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">{{ attempt.user.username }}</p>
-                                <p class="text-sm text-gray-500">{{ attempt.quiz.title }}</p>
-                            </div>
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                      {% if attempt.score >= attempt.quiz.passing_score %}bg-green-100 text-green-800
-                                      {% else %}bg-red-100 text-red-800{% endif %}">
-                                {{ attempt.score|floatformat:0 }}%
-                            </span>
+                <!-- Quick Actions -->
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-lightning-charge-fill text-primary me-2"></i>
+                            Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'admin_create_user' %}" class="btn btn-primary">
+                                <i class="bi bi-person-plus me-2"></i>Add User
+                            </a>
+                            <a href="{% url 'admin_create_quiz' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Create Quiz
+                            </a>
+                            <a href="{% url 'admin_create_resource' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-file-earmark-text me-2"></i>Add Resource
+                            </a>
+                            <a href="#" class="btn btn-outline-primary">
+                                <i class="bi bi-megaphone me-2"></i>Send Announcement
+                            </a>
                         </div>
-                        <div class="mt-1 text-xs text-gray-500">
-                            {{ attempt.completed_at|timesince }} ago
-                        </div>
-                    </li>
-                    {% empty %}
-                    <li class="px-6 py-4 text-center text-gray-500">
-                        No quiz attempts yet.
-                    </li>
-                    {% endfor %}
-                </ul>
-                <div class="px-6 py-4 border-t border-gray-200">
-                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-500">
-                        View all attempts →
-                    </a>
-                </div>
-            </div>
-
-            <!-- Recent Mood Entries -->
-            <div class="bg-white shadow rounded-lg overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-900">Recent Mood Entries</h2>
-                </div>
-                <ul class="divide-y divide-gray-200">
-                    {% for entry in recent_mood_entries %}
-                    <li class="px-6 py-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">{{ entry.user.username }}</p>
-                                <p class="text-sm text-gray-500">{{ entry.get_mood_level_display }}</p>
-                            </div>
-                            <span class="text-xl">
-                                {% if entry.mood_level == 1 %}😞
-                                {% elif entry.mood_level == 2 %}😕
-                                {% elif entry.mood_level == 3 %}😐
-                                {% elif entry.mood_level == 4 %}🙂
-                                {% else %}😊{% endif %}
-                            </span>
-                        </div>
-                        {% if entry.notes %}
-                        <div class="mt-1 text-xs text-gray-600 line-clamp-2">
-                            {{ entry.notes }}
-                        </div>
-                        {% endif %}
-                        <div class="mt-1 text-xs text-gray-500">
-                            {{ entry.recorded_at|timesince }} ago
-                        </div>
-                    </li>
-                    {% empty %}
-                    <li class="px-6 py-4 text-center text-gray-500">
-                        No mood entries yet.
-                    </li>
-                    {% endfor %}
-                </ul>
-                <div class="px-6 py-4 border-t border-gray-200">
-                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-500">
-                        View all entries →
-                    </a>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="bg-white shadow rounded-lg p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-                <div class="space-y-3">
-                    <a href="#" class="block w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 text-center">
-                        Add New User
-                    </a>
-                    <a href="#" class="block w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 text-center">
-                        Create New Quiz
-                    </a>
-                    <a href="#" class="block w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 text-center">
-                        Add Resource
-                    </a>
-                    <a href="#" class="block w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 text-center">
-                        Schedule Event
-                    </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // User Growth Chart
-    const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
-    new Chart(userGrowthCtx, {
+    const growthCtx = document.getElementById('userGrowthChart').getContext('2d');
+    new Chart(growthCtx, {
         type: 'line',
         data: {
             labels: {{ user_growth.labels|safe }},
             datasets: [{
                 label: 'New Users',
                 data: {{ user_growth.data|safe }},
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                borderColor: 'rgba(59, 130, 246, 0.8)',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                borderColor: 'rgba(13, 110, 253, 1)',
                 borderWidth: 2,
                 tension: 0.3,
                 fill: true
             }]
         },
         options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.parsed.y} new users`;
+                        }
+                    }
+                }
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return Number.isInteger(value) ? value : '';
+                        }
+                    }
+                } 
+            }
         }
     });
 
-    // User Type Chart
-    const userTypeCtx = document.getElementById('userTypeChart').getContext('2d');
-    new Chart(userTypeCtx, {
+    // Mood Distribution Chart
+    const moodCtx = document.getElementById('moodChart').getContext('2d');
+    new Chart(moodCtx, {
         type: 'doughnut',
         data: {
-            labels: ['Students', 'Counselors', 'Admins'],
+            labels: ['Very Negative', 'Negative', 'Neutral', 'Positive', 'Very Positive'],
             datasets: [{
-                data: [{{ user_types.students }}, {{ user_types.counselors }}, {{ user_types.admins }}],
-                backgroundColor: ['#3B82F6', '#10B981', '#8B5CF6'],
+                data: {{ mood_stats.values|safe }},
+                backgroundColor: [
+                    'rgba(220, 53, 69, 0.8)',
+                    'rgba(253, 126, 20, 0.8)',
+                    'rgba(108, 117, 125, 0.8)',
+                    'rgba(13, 202, 240, 0.8)',
+                    'rgba(25, 135, 84, 0.8)'
+                ],
                 borderWidth: 0
             }]
         },
         options: {
-            responsive: true,
             cutout: '70%',
-            plugins: { legend: { position: 'bottom' } }
-        }
-    });
-
-    // Mood Trends Chart
-    const moodTrendsCtx = document.getElementById('moodTrendsChart').getContext('2d');
-    new Chart(moodTrendsCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Very Low', 'Low', 'Neutral', 'Good', 'Excellent'],
-            datasets: [{
-                data: {{ mood_stats.values|safe }},
-                backgroundColor: [
-                    'rgba(239, 68, 68, 0.7)',
-                    'rgba(249, 115, 22, 0.7)',
-                    'rgba(234, 179, 8, 0.7)',
-                    'rgba(34, 197, 94, 0.7)',
-                    'rgba(16, 185, 129, 0.7)'
-                ],
-                borderColor: [
-                    'rgba(239, 68, 68, 1)',
-                    'rgba(249, 115, 22, 1)',
-                    'rgba(234, 179, 8, 1)',
-                    'rgba(34, 197, 94, 1)',
-                    'rgba(16, 185, 129, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
-        }
-    });
-
-    // Quiz Performance Chart
-    const quizPerformanceCtx = document.getElementById('quizPerformanceChart').getContext('2d');
-    new Chart(quizPerformanceCtx, {
-        type: 'bar',
-        data: {
-            labels: {{ quiz_stats.top_quizzes|safe }},
-            datasets: [{
-                label: 'Average Score',
-                data: {{ quiz_stats.top_scores|safe }},
-                backgroundColor: 'rgba(99, 102, 241, 0.6)',
-                borderColor: 'rgba(99, 102, 241, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { x: { beginAtZero: true, max: 100 } }
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
         }
     });
 </script>
+
+<style>
+    .admin-header {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .card {
+        border-radius: 12px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+    }
+    .avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+    }
+    .avatar-title {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        font-weight: 600;
+    }
+    .progress {
+        border-radius: 100px;
+    }
+    .badge {
+        padding: 5px 8px;
+        font-weight: 500;
+    }
+</style>
 {% endblock %}

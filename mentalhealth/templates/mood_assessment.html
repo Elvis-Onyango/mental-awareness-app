@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mood Assessment | Mental Wellness{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Mood Assessment Card -->
+            <div class="card border-0 shadow-lg overflow-hidden">
+                <!-- Card Header with Gradient Background -->
+                <div class="card-header py-4 text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h1 class="h3 mb-1">How are you feeling today?</h1>
+                            <p class="mb-0 opacity-75">Select what best matches your current emotional state</p>
+                        </div>
+                        <i class="bi bi-emoji-smile fs-1"></i>
+                    </div>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="card-body p-4 p-md-5">
+                    <!-- Mood Selection Grid -->
+                    <form method="post" id="moodAssessmentForm" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-3 text-center">
+                            <!-- Very Negative -->
+                            <div class="col-6 col-md-4 col-lg-3 mx-auto">
+                                <input type="radio" class="btn-check" name="mood_level" id="mood1" value="1" autocomplete="off" required>
+                                <label class="btn btn-mood w-100 h-100 p-3 rounded-3" for="mood1">
+                                    <div class="mood-icon mb-2">
+                                        <div class="mood-circle bg-danger bg-opacity-10 text-danger">
+                                            <i class="bi bi-emoji-frown fs-2"></i>
+                                        </div>
+                                    </div>
+                                    <span class="d-block fw-medium">Very Negative</span>
+                                    <small class="text-muted d-block">Struggling</small>
+                                </label>
+                            </div>
+                            
+                            <!-- Negative -->
+                            <div class="col-6 col-md-4 col-lg-3 mx-auto">
+                                <input type="radio" class="btn-check" name="mood_level" id="mood2" value="2" autocomplete="off">
+                                <label class="btn btn-mood w-100 h-100 p-3 rounded-3" for="mood2">
+                                    <div class="mood-icon mb-2">
+                                        <div class="mood-circle bg-warning bg-opacity-10 text-warning">
+                                            <i class="bi bi-emoji-neutral fs-2"></i>
+                                        </div>
+                                    </div>
+                                    <span class="d-block fw-medium">Negative</span>
+                                    <small class="text-muted d-block">Down</small>
+                                </label>
+                            </div>
+                            
+                            <!-- Neutral -->
+                            <div class="col-6 col-md-4 col-lg-3 mx-auto">
+                                <input type="radio" class="btn-check" name="mood_level" id="mood3" value="3" autocomplete="off">
+                                <label class="btn btn-mood w-100 h-100 p-3 rounded-3" for="mood3">
+                                    <div class="mood-icon mb-2">
+                                        <div class="mood-circle bg-secondary bg-opacity-10 text-secondary">
+                                            <i class="bi bi-emoji-expressionless fs-2"></i>
+                                        </div>
+                                    </div>
+                                    <span class="d-block fw-medium">Neutral</span>
+                                    <small class="text-muted d-block">Okay</small>
+                                </label>
+                            </div>
+                            
+                            <!-- Positive -->
+                            <div class="col-6 col-md-4 col-lg-3 mx-auto">
+                                <input type="radio" class="btn-check" name="mood_level" id="mood4" value="4" autocomplete="off">
+                                <label class="btn btn-mood w-100 h-100 p-3 rounded-3" for="mood4">
+                                    <div class="mood-icon mb-2">
+                                        <div class="mood-circle bg-info bg-opacity-10 text-info">
+                                            <i class="bi bi-emoji-smile fs-2"></i>
+                                        </div>
+                                    </div>
+                                    <span class="d-block fw-medium">Positive</span>
+                                    <small class="text-muted d-block">Good</small>
+                                </label>
+                            </div>
+                            
+                            <!-- Very Positive -->
+                            <div class="col-6 col-md-4 col-lg-3 mx-auto">
+                                <input type="radio" class="btn-check" name="mood_level" id="mood5" value="5" autocomplete="off">
+                                <label class="btn btn-mood w-100 h-100 p-3 rounded-3" for="mood5">
+                                    <div class="mood-icon mb-2">
+                                        <div class="mood-circle bg-success bg-opacity-10 text-success">
+                                            <i class="bi bi-emoji-laughing fs-2"></i>
+                                        </div>
+                                    </div>
+                                    <span class="d-block fw-medium">Very Positive</span>
+                                    <small class="text-muted d-block">Great</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Optional Notes Section -->
+                        <div class="mt-5" id="notesSection">
+                            <div class="form-floating">
+                                <textarea class="form-control" name="notes" id="notes" 
+                                    placeholder="Tell us more about how you're feeling (optional)"
+                                    style="height: 100px"></textarea>
+                                <label for="notes">
+                                    <i class="bi bi-pencil-square me-2"></i>
+                                    Additional notes (optional)
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                This helps us better understand your current state
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg py-3">
+                                <i class="bi bi-arrow-right-circle me-2"></i>
+                                Continue to Recommended Resources
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Help Text -->
+            <div class="text-center mt-4 text-muted">
+                <small>
+                    <i class="bi bi-lock-fill me-1"></i>
+                    Your responses are confidential and securely stored
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Mood Selection Styles */
+    .btn-mood {
+        border: 1px solid var(--bs-border-color);
+        transition: all 0.2s ease;
+        background-color: var(--bs-body-bg);
+    }
+    
+    .btn-mood:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .btn-check:checked + .btn-mood {
+        border-color: var(--bs-primary);
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .mood-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-check:checked + .btn-mood .mood-circle {
+        transform: scale(1.1);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 767.98px) {
+        .mood-circle {
+            width: 50px;
+            height: 50px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('moodAssessmentForm');
+    
+    form.addEventListener('submit', function(event) {
+        if (!document.querySelector('input[name="mood_level"]:checked')) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Show toast notification instead of alert
+            const toast = new bootstrap.Toast(document.getElementById('validationToast'));
+            toast.show();
+        }
+        
+        form.classList.add('was-validated');
+    }, false);
+    
+    // Add hover effects
+    const moodOptions = document.querySelectorAll('.btn-mood');
+    moodOptions.forEach(option => {
+        option.addEventListener('mouseenter', function() {
+            if (!this.previousElementSibling.checked) {
+                this.style.transform = 'translateY(-3px)';
+                this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+            }
+        });
+        
+        option.addEventListener('mouseleave', function() {
+            if (!this.previousElementSibling.checked) {
+                this.style.transform = '';
+                this.style.boxShadow = '';
+            }
+        });
+    });
+});
+</script>
+
+<!-- Validation Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="validationToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Please select how you're feeling today
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}

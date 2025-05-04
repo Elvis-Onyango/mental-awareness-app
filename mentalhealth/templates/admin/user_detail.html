@@ -1,0 +1,276 @@
+{% extends 'custom_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">User Details: {{ user.username }}</h1>
+    
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-person-circle me-1"></i>
+                    Profile Information
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <img src="{{ user.profile_picture.url|default:'/static/images/default-profile.png' }}" 
+                             alt="{{ user.username }}" class="rounded-circle" width="150" height="150">
+                    </div>
+                    
+                    <h5 class="text-center">{{ user.get_full_name|default:user.username }}</h5>
+                    <p class="text-muted text-center mb-4">
+                        <span class="badge bg-{% if user.user_type == 'ADMIN' %}danger{% elif user.user_type == 'COUNSELOR' %}warning{% else %}primary{% endif %}">
+                            {{ user.get_user_type_display }}
+                        </span>
+                    </p>
+                    
+                    <div class="mb-3">
+                        <h6>Basic Information</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Email</span>
+                                <span>{{ user.email }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Date Joined</span>
+                                <span>{{ user.date_joined|date:"M d, Y" }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Last Login</span>
+                                <span>{{ user.last_login|timesince }} ago</span>
+                            </li>
+                            {% if user.date_of_birth %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Age</span>
+                                <span>{{ user.date_of_birth|timesince }}</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    {% if user.user_type == 'COUNSELOR' and user.counselor_profile %}
+                    <div class="mb-3">
+                        <h6>Counselor Information</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <strong>Specialization:</strong>
+                                <p>{{ user.counselor_profile.specialization }}</p>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Qualifications:</strong>
+                                <p>{{ user.counselor_profile.qualifications }}</p>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Years of Experience</span>
+                                <span>{{ user.counselor_profile.years_of_experience }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-activity me-1"></i>
+                    Mood History (Last 30 Days)
+                </div>
+                <div class="card-body">
+                    {% if mood_history %}
+                    <canvas id="moodHistoryChart" height="100"></canvas>
+                    <div class="mt-3">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Mood</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for mood in mood_history|slice:":5" %}
+                                <tr>
+                                    <td>{{ mood.recorded_at|date:"M d" }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if mood.mood_level <= 2 %}danger{% elif mood.mood_level <= 3 %}warning{% else %}success{% endif %}">
+                                            {{ mood.get_mood_level_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ mood.notes|truncatechars:30 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% if mood_history|length > 5 %}
+                        <a href="#" class="btn btn-sm btn-outline-primary">View All Mood Entries</a>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-emoji-frown fs-1"></i>
+                        <p class="mt-2">No mood history recorded</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-clipboard-data me-1"></i>
+                    Quiz Attempts
+                </div>
+                <div class="card-body">
+                    {% if quiz_attempts %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Quiz</th>
+                                    <th>Date</th>
+                                    <th>Score</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attempt in quiz_attempts %}
+                                <tr>
+                                    <td>{{ attempt.quiz.title }}</td>
+                                    <td>{{ attempt.completed_at|date:"M d" }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px; width: 100px;">
+                                            <div class="progress-bar bg-{% if attempt.score >= 70 %}success{% elif attempt.score >= 40 %}warning{% else %}danger{% endif %}" 
+                                                 role="progressbar" style="width: {{ attempt.score }}%" 
+                                                 aria-valuenow="{{ attempt.score }}" aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                {{ attempt.score|floatformat:0 }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if attempt.is_completed %}
+                                        <span class="badge bg-success">Completed</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Incomplete</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-clipboard-x fs-1"></i>
+                        <p class="mt-2">No quiz attempts recorded</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-calendar-event me-1"></i>
+                    Appointments
+                </div>
+                <div class="card-body">
+                    {% if appointments %}
+                    <div class="list-group list-group-flush">
+                        {% for appointment in appointments %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <div>
+                                    <h6 class="mb-1">
+                                        {% if user.user_type == 'STUDENT' %}
+                                        With {{ appointment.counselor.user.username }}
+                                        {% else %}
+                                        With {{ appointment.client.username }}
+                                        {% endif %}
+                                    </h6>
+                                    <small class="text-muted">
+                                        {{ appointment.datetime|date:"F j, Y g:i a" }}
+                                    </small>
+                                </div>
+                                <span class="badge bg-{% if appointment.status == 'completed' %}success{% elif appointment.status == 'cancelled' %}danger{% else %}info{% endif %}">
+                                    {{ appointment.get_status_display }}
+                                </span>
+                            </div>
+                            {% if appointment.notes %}
+                            <p class="mt-2 mb-1 small">{{ appointment.notes|truncatechars:100 }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-calendar-x fs-1"></i>
+                        <p class="mt-2">No appointments scheduled</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Mood History Chart
+    {% if mood_history %}
+    const moodCtx = document.getElementById('moodHistoryChart').getContext('2d');
+    new Chart(moodCtx, {
+        type: 'line',
+        data: {
+            labels: [
+                {% for mood in mood_history %}
+                "{{ mood.recorded_at|date:'M j' }}"{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Mood Level',
+                data: [
+                    {% for mood in mood_history %}
+                    {{ mood.mood_level }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    min: 1,
+                    max: 5,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            const moods = ['', 'Very Negative', 'Negative', 'Neutral', 'Positive', 'Very Positive'];
+                            return moods[value];
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const moods = ['', 'Very Negative', 'Negative', 'Neutral', 'Positive', 'Very Positive'];
+                            return moods[context.raw];
+                        }
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

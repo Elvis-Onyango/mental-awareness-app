@@ -6,7 +6,7 @@ from .models import (
     User, CounselorProfile, Appointment, MentalHealthCategory, 
     Quiz, Question, AnswerOption, QuizAttempt, UserResponse,
     MoodEntry, WellnessResource, ForumPost, ForumComment,
-    Event, UserWellnessJourney
+    Event, UserWellnessJourney,Announcement
 )
 
 # Custom User Admin
@@ -317,3 +317,28 @@ class UserWellnessJourneyAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user')
+
+
+class AnnouncementAdmin(admin.ModelAdmin):
+    list_display = ('title', 'priority', 'created_by', 'created_at', 'is_published')
+    list_filter = ('priority', 'is_published', 'created_at')
+    search_fields = ('title', 'message', 'created_by__username')
+    filter_horizontal = ('recipients',)
+    readonly_fields = ('published_at',)
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'message', 'priority')
+        }),
+        ('Delivery Options', {
+            'fields': ('recipients', 'send_email', 'scheduled_at')
+        }),
+        ('Publication Status', {
+            'fields': ('is_published', 'published_at', 'created_by')
+        }),
+    )
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:  # Only set created_by if this is a new announcement
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+admin.site.register(Announcement, AnnouncementAdmin)

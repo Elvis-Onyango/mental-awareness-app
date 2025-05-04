@@ -6,89 +6,210 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
         }
         .hero {
-            background-image: url('https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=1099&q=80');
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.8) 0%, rgba(129, 140, 248, 0.8) 100%), 
+                        url('https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=1099&q=80');
             background-size: cover;
             background-position: center;
+            background-attachment: fixed;
+        }
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
     </style>
+    
     <!-- Hero Section -->
-    <section class="hero text-white py-32">
-        <div class="container mx-auto px-6 text-center">
-            <h1 class="text-5xl font-bold mb-6">Take Control of Your Mental Health</h1>
-            <p class="text-xl mb-8">Track your mood, gain insights, and improve your well-being with MindCare.</p>
-            <div class="space-x-4">
-                <a href="{% url 'login' %}" class="inline-block px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow-lg hover:bg-blue-50 transition duration-300">Get Started</a>
-                <a href="{% url 'quiz_list' %}" class="inline-block px-8 py-3 border border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition duration-300">Take a Quiz</a>
+    <section class="hero text-white py-24 md:py-32 relative overflow-hidden">
+        <div class="absolute inset-0 bg-black opacity-10"></div>
+        <div class="container mx-auto px-6 text-center relative z-10">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">Your Journey to <span class="gradient-text">Better Mental Health</span> Starts Here</h1>
+            <p class="text-lg md:text-xl mb-8 max-w-2xl mx-auto">Track your mood, gain powerful insights, and build healthier habits with MindWell's intuitive platform.</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="{% url 'login' %}" class="px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow-lg hover:bg-blue-50 transition duration-300 transform hover:scale-105">
+                    Get Started - It's Free
+                </a>
+                <a href="{% url 'quiz_list' %}" class="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition duration-300 transform hover:scale-105">
+                    Take Our Wellness Quiz
+                </a>
+            </div>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-16 bg-white transform skew-y-1 -mb-8 z-0"></div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="container mx-auto px-6 py-12 -mt-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white rounded-xl shadow-lg p-6 max-w-5xl mx-auto">
+            <div class="text-center p-4">
+                <div class="text-3xl font-bold text-blue-600 mb-2">10K+</div>
+                <div class="text-gray-600">Active Users</div>
+            </div>
+            <div class="text-center p-4">
+                <div class="text-3xl font-bold text-purple-600 mb-2">95%</div>
+                <div class="text-gray-600">Reported Improvement</div>
+            </div>
+            <div class="text-center p-4">
+                <div class="text-3xl font-bold text-indigo-600 mb-2">24/7</div>
+                <div class="text-gray-600">Support Available</div>
+            </div>
+            <div class="text-center p-4">
+                <div class="text-3xl font-bold text-blue-400 mb-2">100%</div>
+                <div class="text-gray-600">Privacy Focused</div>
             </div>
         </div>
     </section>
 
     <!-- Features Section -->
     <section class="container mx-auto px-6 py-16">
-        <h2 class="text-3xl font-bold text-center mb-12">What We Offer</h2>
+        <div class="text-center mb-16">
+            <span class="text-blue-600 font-semibold">WHY CHOOSE US</span>
+            <h2 class="text-3xl md:text-4xl font-bold mt-2 mb-4">Features Designed for <span class="gradient-text">Your Wellbeing</span></h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">MindWell combines science-backed tools with intuitive design to support your mental health journey.</p>
+        </div>
+        
         <div class="grid md:grid-cols-3 gap-8">
-            <div class="bg-white p-8 rounded-xl shadow-lg text-center hover:shadow-xl transition-shadow duration-300">
-                <svg class="w-12 h-12 mx-auto mb-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
-                <h3 class="text-xl font-semibold mb-4">Mood Tracking</h3>
-                <p class="text-gray-600">Log your emotions and track patterns over time to better understand your mental health.</p>
+            <div class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl">
+                <div class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Smart Mood Tracking</h3>
+                <p class="text-gray-600">Log your emotions with our intuitive interface and discover patterns in your mental wellbeing over time.</p>
+                <a href="#" class="inline-block mt-4 text-blue-600 font-medium hover:underline">Learn more →</a>
             </div>
-            <div class="bg-white p-8 rounded-xl shadow-lg text-center hover:shadow-xl transition-shadow duration-300">
-                <svg class="w-12 h-12 mx-auto mb-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                </svg>
-                <h3 class="text-xl font-semibold mb-4">Mental Health Quizzes</h3>
-                <p class="text-gray-600">Take self-assessments to gain insights into your mental well-being.</p>
+            
+            <div class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl">
+                <div class="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Personalized Assessments</h3>
+                <p class="text-gray-600">Take clinically-validated quizzes that provide meaningful insights about your mental health.</p>
+                <a href="#" class="inline-block mt-4 text-purple-600 font-medium hover:underline">Try a quiz →</a>
             </div>
-            <div class="bg-white p-8 rounded-xl shadow-lg text-center hover:shadow-xl transition-shadow duration-300">
-                <svg class="w-12 h-12 mx-auto mb-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
-                <h3 class="text-xl font-semibold mb-4">Insights & Analysis</h3>
-                <p class="text-gray-600">Get personalized insights based on your mood trends and activities.</p>
+            
+            <div class="feature-card bg-white p-8 rounded-xl shadow-lg hover:shadow-xl">
+                <div class="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">AI-Powered Insights</h3>
+                <p class="text-gray-600">Receive personalized recommendations based on your unique patterns and behaviors.</p>
+                <a href="#" class="inline-block mt-4 text-indigo-600 font-medium hover:underline">See how it works →</a>
             </div>
         </div>
     </section>
 
-    <!-- About Us Section -->
-    <section class="bg-blue-50 py-16">
+    <!-- Testimonial Section -->
+    <section class="bg-gradient-to-r from-blue-50 to-purple-50 py-16">
         <div class="container mx-auto px-6">
-            <h2 class="text-3xl font-bold text-center mb-8">About Us</h2>
-            <div class="max-w-2xl mx-auto text-center">
-                <p class="text-gray-600 mb-6">
-                    At MindCare, we are dedicated to helping you take control of your mental health. Our platform provides tools and resources to track your mood, gain insights, and improve your overall well-being.
-                </p>
-                <p class="text-gray-600">
-                    Founded by a team of mental health advocates and tech enthusiasts, MindCare is designed to make mental health management accessible, intuitive, and effective for everyone.
-                </p>
+            <div class="max-w-4xl mx-auto text-center mb-12">
+                <span class="text-blue-600 font-semibold">USER STORIES</span>
+                <h2 class="text-3xl font-bold mt-2 mb-4">Trusted by Thousands Worldwide</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                            <span class="text-blue-600 font-bold">JI</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">James Isaac</h4>
+                            <div class="flex text-yellow-400">
+                                ★ ★ ★ ★ ★
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">"MindWell helped me recognize patterns in my mood swings I never noticed before. The insights have been life-changing for managing my anxiety."</p>
+                </div>
+                
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mr-4">
+                            <span class="text-purple-600 font-bold">IK</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Ivy Kavonga.</h4>
+                            <div class="flex text-yellow-400">
+                                ★ ★ ★ ★ ★
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">"As someone who's skeptical of mental health apps, I was surprised by how useful the daily check-ins and analytics turned out to be. Highly recommend!"</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Why Choose Us Section -->
+    <!-- CTA Section -->
+    <section class="py-16">
+        <div class="container mx-auto px-6">
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 md:p-12 text-white text-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-4">Ready to Take Control of Your Mental Health?</h2>
+                <p class="text-blue-100 max-w-2xl mx-auto mb-8">Join thousands of users who have transformed their wellbeing with MindWell. It's free to get started.</p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="{% url 'signup' %}" class="px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow-lg hover:bg-blue-50 transition duration-300">
+                        Create Free Account
+                    </a>
+                    <a href="#" class="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition duration-300">
+                        Explore Features
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
     <section class="container mx-auto px-6 py-16">
-        <h2 class="text-3xl font-bold text-center mb-12">Why Choose MindCare?</h2>
-        <div class="grid md:grid-cols-2 gap-8">
-            <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <h3 class="text-xl font-semibold mb-4">Personalized Insights</h3>
-                <p class="text-gray-600">Our platform analyzes your mood patterns and provides tailored recommendations to help you improve your mental health.</p>
+        <div class="text-center mb-16">
+            <span class="text-blue-600 font-semibold">HAVE QUESTIONS?</span>
+            <h2 class="text-3xl font-bold mt-2 mb-4">Frequently Asked Questions</h2>
+        </div>
+        
+        <div class="max-w-3xl mx-auto space-y-4">
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="font-semibold text-lg flex justify-between items-center">
+                    <span>Is my data private and secure?</span>
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </h3>
+                <p class="mt-2 text-gray-600">Absolutely. We use bank-level encryption and never share your personal data with third parties. Your mental health journey is yours alone.</p>
             </div>
-            <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <h3 class="text-xl font-semibold mb-4">User-Friendly Design</h3>
-                <p class="text-gray-600">MindCare is designed to be intuitive and easy to use, ensuring a seamless experience for all users.</p>
+            
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="font-semibold text-lg flex justify-between items-center">
+                    <span>How much does MindWell cost?</span>
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </h3>
+                <p class="mt-2 text-gray-600">MindWell offers a robust free version. Our premium plan with advanced features is just $9.99/month with a 30-day free trial.</p>
             </div>
-            <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <h3 class="text-xl font-semibold mb-4">Privacy & Security</h3>
-                <p class="text-gray-600">We prioritize your privacy and ensure that all your data is securely stored and protected.</p>
-            </div>
-            <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <h3 class="text-xl font-semibold mb-4">24/7 Support</h3>
-                <p class="text-gray-600">Our team is always here to help you with any questions or concerns you may have.</p>
+            
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="font-semibold text-lg flex justify-between items-center">
+                    <span>Can MindWell replace therapy?</span>
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </h3>
+                <p class="mt-2 text-gray-600">MindWell is designed to complement professional care, not replace it. We always recommend consulting with a licensed therapist for clinical needs.</p>
             </div>
         </div>
     </section>
-
 {% endblock %}

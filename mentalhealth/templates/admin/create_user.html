@@ -1,0 +1,123 @@
+{% extends 'custom_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">{% if form.instance.id %}Edit{% else %}Create{% endif %} User</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-person{% if form.instance.id %}-edit{% else %}-plus{% endif %} me-1"></i>
+            User Details
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form.username.label_tag }}
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.username.errors.as_text }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.email.label_tag }}
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.email.errors.as_text }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form.first_name.label_tag }}
+                        {{ form.first_name }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.last_name.label_tag }}
+                        {{ form.last_name }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        {{ form.user_type.label_tag }}
+                        {{ form.user_type }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.date_of_birth.label_tag }}
+                        {{ form.date_of_birth }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.phone_number.label_tag }}
+                        {{ form.phone_number }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form.institution.label_tag }}
+                        {{ form.institution }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.profile_picture.label_tag }}
+                        {{ form.profile_picture }}
+                        {% if form.instance.profile_picture %}
+                        <div class="mt-2">
+                            <img src="{{ form.instance.profile_picture.url }}" alt="Current profile picture" 
+                                 class="img-thumbnail" style="max-height: 100px;">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if not form.instance.id %}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form.password1.label_tag }}
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.password1.errors.as_text }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.password2.label_tag }}
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.password2.errors.as_text }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="form-check mb-3">
+                    {{ form.is_verified }}
+                    <label class="form-check-label" for="{{ form.is_verified.id_for_label }}">
+                        {{ form.is_verified.label }}
+                    </label>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'admin_user_management' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

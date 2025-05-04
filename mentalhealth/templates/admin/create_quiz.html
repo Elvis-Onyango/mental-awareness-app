@@ -1,0 +1,75 @@
+{% extends 'custom_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Create New Quiz</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-clipboard-plus me-1"></i>
+            Quiz Details
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    {{ form.title.label_tag }}
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.title.errors.as_text }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.description.label_tag }}
+                    {{ form.description }}
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form.category.label_tag }}
+                        {{ form.category }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.difficulty.label_tag }}
+                        {{ form.difficulty }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form.time_limit.label_tag }}
+                        {{ form.time_limit }}
+                        <small class="text-muted">Leave blank for no time limit</small>
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.passing_score.label_tag }}
+                        {{ form.passing_score }}
+                        <small class="text-muted">Minimum score to pass (0-100)</small>
+                    </div>
+                </div>
+                
+                <div class="form-check form-switch mb-3">
+                    {{ form.is_active }}
+                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                        {{ form.is_active.label }}
+                    </label>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'admin_quiz_management' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Save Quiz
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

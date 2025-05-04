@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Recommended Quizzes | Mental Wellness{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <!-- Mood Summary Section -->
+            <div class="card border-0 shadow-sm mb-5 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-8 p-4 d-flex flex-column">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-{% if mood_entry.mood_level <= 2 %}danger{% elif mood_entry.mood_level >= 4 %}success{% else %}info{% endif %} bg-opacity-10 rounded p-2 me-3">
+                                    <i class="bi 
+                                        {% if mood_entry.mood_level == 1 %}bi-emoji-frown text-danger
+                                        {% elif mood_entry.mood_level == 2 %}bi-emoji-neutral text-warning
+                                        {% elif mood_entry.mood_level == 3 %}bi-emoji-expressionless text-info
+                                        {% elif mood_entry.mood_level == 4 %}bi-emoji-smile text-success
+                                        {% else %}bi-emoji-laughing text-success{% endif %} fs-1">
+                                    </i>
+                                </div>
+                                <div>
+                                    <h2 class="h4 mb-0">Your Current Mood</h2>
+                                    <p class="text-muted mb-0">{{ mood_level_display }}</p>
+                                </div>
+                            </div>
+                            <div class="mt-auto">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-{% if difficulty == 'HARD' %}danger{% elif difficulty == 'MEDIUM' %}warning{% else %}success{% endif %} me-2">
+                                        {{ difficulty }} LEVEL
+                                    </span>
+                                    <small class="text-muted">
+                                        <i class="bi bi-lightbulb me-1"></i>
+                                        We've selected these quizzes based on your mood
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 bg-{% if mood_entry.mood_level <= 2 %}danger{% elif mood_entry.mood_level >= 4 %}success{% else %}info{% endif %} bg-opacity-10 p-4 d-flex align-items-center justify-content-center">
+                            <img src="{% static 'images/mood.jpeg' %}" alt="Mood Recommendations" class="img-fluid" style="max-height: 120px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Recommendations -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="h4 mb-0">
+                    <i class="bi bi-stars text-primary me-2"></i>
+                    Personalized Recommendations
+                </h3>
+                <a href="{% url 'quiz_list' %}" class="btn btn-sm btn-outline-secondary">
+                    View All Quizzes
+                </a>
+            </div>
+
+            {% if quizzes %}
+            <div class="row g-4">
+                {% for quiz in quizzes %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
+                        <div class="card-header bg-{% if quiz.difficulty == 'HARD' %}danger{% elif quiz.difficulty == 'MEDIUM' %}warning{% else %}success{% endif %} bg-opacity-10 border-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-{% if quiz.difficulty == 'HARD' %}danger{% elif quiz.difficulty == 'MEDIUM' %}warning{% else %}success{% endif %} text-white">
+                                    {{ quiz.get_difficulty_display }}
+                                </span>
+                                <small class="text-muted">
+                                    {{ quiz.questions.count }} Qs
+                                </small>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ quiz.title }}</h5>
+                            <p class="card-text text-muted">{{ quiz.description|truncatewords:20 }}</p>
+                            <div class="d-flex align-items-center mt-3">
+                                <span class="badge bg-light text-dark me-2">
+                                    <i class="bi bi-tag me-1"></i>
+                                    {{ quiz.category.name }}
+                                </span>
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-clock me-1"></i>
+                                    {{ quiz.time_limit }} min
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pt-0">
+                            <a href="{% url 'start_quiz' quiz.id %}" class="btn btn-primary w-100 stretched-link">
+                                Start Now
+                                <i class="bi bi-arrow-right ms-2"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <img src="{% static 'images/mental.jpeg' %}" alt="No quizzes" style="max-height: 120px;" class="mb-4">
+                    <h4 class="h5 mb-3">No quizzes match your current mood</h4>
+                    <p class="text-muted mb-4">We couldn't find any quizzes that fit your current emotional state.</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'quiz_list' %}" class="btn btn-outline-primary">
+                            Browse All Quizzes
+                        </a>
+                        <a href="{% url 'mood_assessment' %}" class="btn btn-primary">
+                            <i class="bi bi-arrow-repeat me-2"></i>
+                            Retake Assessment
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Alternative Options -->
+            <div class="card border-0 shadow-sm mt-5">
+                <div class="card-body text-center py-4">
+                    <h4 class="h5 mb-3">Need something different?</h4>
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <a href="{% url 'mood_based_quizzes' mood_entry.id %}?difficulty=EASY" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-emoji-smile me-1"></i>
+                            Easier Quizzes
+                        </a>
+                        <a href="{% url 'mood_based_quizzes' mood_entry.id %}?difficulty=MEDIUM" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-emoji-neutral me-1"></i>
+                            Medium Quizzes
+                        </a>
+                        <a href="{% url 'mood_based_quizzes' mood_entry.id %}?difficulty=HARD" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-emoji-frown me-1"></i>
+                            Harder Quizzes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-shadow {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    .stretched-link::after {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1;
+        content: "";
+    }
+</style>
+{% endblock %}

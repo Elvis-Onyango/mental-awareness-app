@@ -60,6 +60,41 @@ class User(AbstractUser):
         return self.user_type == 'COUNSELOR' or getattr(self, 'is_counselor', False)
 
 
+    @property
+    def engagement_metrics(self):
+        metrics, created = UserEngagementMetrics.objects.get_or_create(user=self)
+        return metrics
+    
+    def log_activity(self, action, **kwargs):
+        """Helper method to log user activities"""
+        UserActivityLog.objects.create(
+            user=self,
+            action=action,
+            ip_address=kwargs.get('ip_address'),
+            device_info=kwargs.get('device_info'),
+            additional_data=kwargs.get('data', {})
+        )
+        # Update engagement metrics
+        self.engagement_metrics.last_active = timezone.now()
+        
+        # Increment relevant counters
+        if action == 'QUIZ_COMPLETE':
+            self.engagement_metrics.total_quiz_attempts += 1
+        elif action == 'RESOURCE_VIEW':
+            self.engagement_metrics.total_resources_viewed += 1
+        elif action == 'APPOINTMENT_BOOK':
+            self.engagement_metrics.total_appointments += 1
+        elif action == 'FORUM_POST':
+            self.engagement_metrics.total_forum_posts += 1
+        elif action == 'MOOD_ENTRY':
+            self.engagement_metrics.total_mood_entries += 1
+        elif action == 'LOGIN':
+            self.engagement_metrics.total_logins += 1
+            
+        self.engagement_metrics.save()
+        self.engagement_metrics.update_engagement_score()    
+
+
     def __str__(self):
         return f"{self.username} ({self.get_user_type_display()})"
 
@@ -81,6 +116,16 @@ class CounselorProfile(models.Model):
         'license_number', 'contact_email', 'available_hours'
         ]
         return all(getattr(self, field) for field in required_fields)
+
+    @property
+    def performance_metrics(self):
+        metrics, created = CounselorPerformance.objects.get_or_create(counselor=self)
+        return metrics
+    
+    def update_performance_metrics(self):
+        """Update all performance metrics"""
+        self.performance_metrics.update_metrics()
+    
 
 
     def __str__(self):
@@ -158,6 +203,21 @@ class Quiz(models.Model):
     @property
     def total_points(self):
         return sum(question.points for question in self.questions.all())
+
+
+    @property
+    def analytics(self):
+        analytics, created = ContentAnalytics.objects.get_or_create(
+            content_type='quiz',
+            content_id=self.id
+        )
+        return analytics
+    
+    def increment_views(self):
+        """Increment view count for this quiz"""
+        self.analytics.views += 1
+        self.analytics.save()
+    
 
 class Question(models.Model):
     QUESTION_TYPES = (
@@ -263,6 +323,14 @@ class MoodEntry(models.Model):
     def __str__(self):
         return f"{self.user.username}: {self.get_mood_level_display()} at {self.recorded_at}"
 
+    def get_recommended_difficulty(self):
+        if self.mood_level in [1, 5]:
+            return 'HARD'
+        elif self.mood_level in [2, 4]:
+            return 'MEDIUM'
+        else:
+             return 'EASY'    
+
 class WellnessResource(models.Model):
     RESOURCE_TYPES = (
         ('ARTICLE', 'Article'),
@@ -330,6 +398,20 @@ class WellnessResource(models.Model):
             # If it's full embed code
             return self.video_embed_code
         return None
+
+
+    @property
+    def analytics(self):
+        analytics, created = ContentAnalytics.objects.get_or_create(
+            content_type='resource',
+            content_id=self.id
+        )
+        return analytics
+    
+    def increment_views(self):
+        """Increment view count for this resource"""
+        self.analytics.views += 1
+        self.analytics.save()    
 
 class ForumPost(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -404,3 +486,202 @@ class Review(models.Model):
     
     def __str__(self):
         return f"{self.rating} star review by {self.user.username}"
+
+
+class UserActivityLog(models.Model):
+    """Tracks all user activities across the platform"""
+    ACTION_CHOICES = (
+        ('LOGIN', 'User Login'),
+        ('LOGOUT', 'User Logout'),
+        ('QUIZ_START', 'Quiz Started'),
+        ('QUIZ_COMPLETE', 'Quiz Completed'),
+        ('RESOURCE_VIEW', 'Resource Viewed'),
+        ('APPOINTMENT_BOOK', 'Appointment Booked'),
+        ('APPOINTMENT_CANCEL', 'Appointment Cancelled'),
+        ('FORUM_POST', 'Forum Post Created'),
+        ('FORUM_COMMENT', 'Forum Comment Added'),
+        ('MOOD_ENTRY', 'Mood Recorded'),
+        ('PROFILE_UPDATE', 'Profile Updated'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_logs')
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    device_info = models.CharField(max_length=255, blank=True)
+    additional_data = models.JSONField(default=dict, blank=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['user', 'action']),
+            models.Index(fields=['timestamp']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_action_display()} at {self.timestamp}"
+
+class PlatformAnalytics(models.Model):
+    """Aggregated platform-wide analytics data"""
+    date = models.DateField(unique=True)
+    active_users = models.PositiveIntegerField(default=0)
+    new_registrations = models.PositiveIntegerField(default=0)
+    quiz_attempts = models.PositiveIntegerField(default=0)
+    resource_views = models.PositiveIntegerField(default=0)
+    appointments_scheduled = models.PositiveIntegerField(default=0)
+    forum_posts = models.PositiveIntegerField(default=0)
+    mood_entries = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        verbose_name_plural = 'Platform Analytics'
+        ordering = ['-date']
+    
+    def __str__(self):
+        return f"Platform Analytics for {self.date}"
+
+class UserEngagementMetrics(models.Model):
+    """Tracks individual user engagement metrics"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='engagement_metrics')
+    last_active = models.DateTimeField(auto_now=True)
+    total_logins = models.PositiveIntegerField(default=0)
+    total_quiz_attempts = models.PositiveIntegerField(default=0)
+    total_resources_viewed = models.PositiveIntegerField(default=0)
+    total_appointments = models.PositiveIntegerField(default=0)
+    total_forum_posts = models.PositiveIntegerField(default=0)
+    total_mood_entries = models.PositiveIntegerField(default=0)
+    engagement_score = models.FloatField(default=0.0)
+    
+    def update_engagement_score(self):
+        """Calculate a composite engagement score"""
+        weights = {
+            'total_logins': 0.2,
+            'total_quiz_attempts': 0.25,
+            'total_resources_viewed': 0.2,
+            'total_appointments': 0.15,
+            'total_forum_posts': 0.1,
+            'total_mood_entries': 0.1,
+        }
+        
+        max_values = {
+            'total_logins': 30,  # per month
+            'total_quiz_attempts': 10,
+            'total_resources_viewed': 20,
+            'total_appointments': 4,
+            'total_forum_posts': 15,
+            'total_mood_entries': 30,
+        }
+        
+        score = 0
+        for metric, weight in weights.items():
+            value = min(getattr(self, metric), max_values.get(metric, 100))
+            normalized = value / max_values.get(metric, 1)
+            score += normalized * weight
+        
+        self.engagement_score = min(score * 100, 100)  # Scale to 100
+        self.save()
+    
+    def __str__(self):
+        return f"Engagement Metrics for {self.user.username}"
+
+class CounselorPerformance(models.Model):
+    """Tracks performance metrics for counselors"""
+    counselor = models.OneToOneField(CounselorProfile, on_delete=models.CASCADE, related_name='performance_metrics')
+    total_appointments = models.PositiveIntegerField(default=0)
+    completed_appointments = models.PositiveIntegerField(default=0)
+    cancellation_rate = models.FloatField(default=0.0)
+    average_rating = models.FloatField(default=0.0)
+    response_time = models.DurationField(null=True, blank=True)  # Average response time to messages
+    client_retention_rate = models.FloatField(default=0.0)
+    last_updated = models.DateTimeField(auto_now=True)
+    
+    def update_metrics(self):
+        """Calculate all performance metrics"""
+        appointments = self.counselor.appointments.all()
+        reviews = self.counselor.counselor_reviews.all()
+        
+        self.total_appointments = appointments.count()
+        self.completed_appointments = appointments.filter(status='completed').count()
+        
+        if self.total_appointments > 0:
+            cancelled = appointments.filter(status='cancelled').count()
+            self.cancellation_rate = (cancelled / self.total_appointments) * 100
+            
+            if reviews.exists():
+                self.average_rating = reviews.aggregate(models.Avg('rating'))['rating__avg']
+            
+            # Calculate client retention (simplified)
+            unique_clients = appointments.values('client').distinct().count()
+            returning_clients = appointments.values('client').annotate(
+                count=models.Count('id')).filter(count__gt=1).count()
+            
+            if unique_clients > 0:
+                self.client_retention_rate = (returning_clients / unique_clients) * 100
+        
+        self.save()
+    
+    def __str__(self):
+        return f"Performance Metrics for {self.counselor.user.username}"
+
+class ContentAnalytics(models.Model):
+    """Tracks engagement with different content pieces"""
+    content_type = models.CharField(max_length=50)  # e.g., 'quiz', 'resource', 'forum_post'
+    content_id = models.PositiveIntegerField()
+    views = models.PositiveIntegerField(default=0)
+    engagements = models.PositiveIntegerField(default=0)  # Clicks, time spent, etc.
+    shares = models.PositiveIntegerField(default=0)
+    last_updated = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('content_type', 'content_id')
+        verbose_name_plural = 'Content Analytics'
+    
+    def __str__(self):
+        return f"Analytics for {self.content_type} #{self.content_id}"
+
+
+
+
+class Announcement(models.Model):
+    PRIORITY_CHOICES = [
+        ('LOW', 'Low'),
+        ('MEDIUM', 'Medium'),
+        ('HIGH', 'High'),
+        ('URGENT', 'Urgent'),
+    ]
+    
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    recipients = models.ManyToManyField(User, related_name='announcements')
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='created_announcements'
+    )
+    priority = models.CharField(
+        max_length=10,
+        choices=PRIORITY_CHOICES,
+        default='MEDIUM'
+    )
+    send_email = models.BooleanField(default=True)
+    is_published = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    scheduled_at = models.DateTimeField(null=True, blank=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Announcement'
+        verbose_name_plural = 'Announcements'
+
+    def __str__(self):
+        return f"{self.title} (Priority: {self.get_priority_display()})"
+
+    def save(self, *args, **kwargs):
+        # Set published_at if is_published is being set to True
+        if self.is_published and not self.published_at:
+            self.published_at = timezone.now()
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('admin_announcement_detail', args=[str(self.id)])
+

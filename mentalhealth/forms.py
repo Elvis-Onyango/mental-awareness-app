@@ -1,7 +1,7 @@
 # accounts/forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import User,CounselorProfile
+from .models import User,CounselorProfile,MoodEntry, MentalHealthCategory
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -169,3 +169,156 @@ class ReviewForm(forms.ModelForm):
         widgets = {
             'comment': forms.Textarea(attrs={'rows': 4}),
         }
+
+
+
+
+
+
+
+class MoodAssessmentForm(forms.Form):
+    MOOD_CHOICES = (
+        (1, '😞 Very Negative'),
+        (2, '😕 Negative'),
+        (3, '😐 Neutral'),
+        (4, '😊 Positive'),
+        (5, '😁 Very Positive'),
+    )
+    
+    mood_level = forms.ChoiceField(
+        choices=MOOD_CHOICES,
+        widget=forms.RadioSelect(attrs={'class': 'btn-check'}),
+        label="How are you feeling today?",
+        required=True
+    )
+
+class QuickMoodEntryForm(forms.ModelForm):
+    class Meta:
+        model = MoodEntry
+        fields = ['mood_level', 'notes']
+        widgets = {
+            'mood_level': forms.RadioSelect(choices=MoodEntry.MOOD_CHOICES),
+            'notes': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Optional notes about your mood...'}),
+        }
+
+
+
+from .models import User, CounselorProfile, Quiz, WellnessResource, Announcement
+
+
+
+class CounselorApprovalForm(forms.ModelForm):
+    APPROVAL_CHOICES = [
+        ('approve', 'Approve Application'),
+        ('reject', 'Reject Application'),
+    ]
+    
+    approval_action = forms.ChoiceField(
+        choices=APPROVAL_CHOICES,
+        widget=forms.RadioSelect,
+        required=True
+    )
+    notes = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=False,
+        help_text="Optional notes about this decision"
+    )
+    
+    class Meta:
+        model = CounselorProfile
+        fields = ['specialization', 'qualifications', 'years_of_experience', 
+                 'license_number', 'available_hours', 'contact_email']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            if field != 'approval_action' and field != 'notes':
+                self.fields[field].disabled = True
+
+class QuizForm(forms.ModelForm):
+    category = forms.ModelChoiceField(
+        queryset=MentalHealthCategory.objects.all(),
+        required=False
+    )
+    passing_score = forms.FloatField(
+        min_value=0,
+        max_value=100,
+        widget=forms.NumberInput(attrs={'step': '0.1'})
+    )
+    
+    class Meta:
+        model = Quiz
+        fields = ['title', 'description', 'category', 'difficulty', 
+                 'time_limit', 'passing_score', 'is_active']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+        }
+
+class ResourceForm(forms.ModelForm):
+    category = forms.ModelChoiceField(
+        queryset=MentalHealthCategory.objects.all(),
+        required=False
+    )
+    
+    class Meta:
+        model = WellnessResource
+        fields = ['title', 'resource_type', 'category', 'content',
+                 'external_link', 'video_file', 'video_embed_code',
+                 'thumbnail', 'duration', 'is_featured']
+        widgets = {
+            'content': forms.Textarea(attrs={'rows': 5}),
+            'video_embed_code': forms.Textarea(attrs={'rows': 2}),
+        }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        resource_type = cleaned_data.get('resource_type')
+        video_file = cleaned_data.get('video_file')
+        video_embed_code = cleaned_data.get('video_embed_code')
+        
+        if resource_type == 'VIDEO':
+            if not video_file and not video_embed_code:
+                raise forms.ValidationError(
+                    "Video resources require either a video file or embed code"
+                )
+            if video_file and video_embed_code:
+                raise forms.ValidationError(
+                    "Cannot have both video file and embed code"
+                )
+        return cleaned_data
+
+class AnnouncementForm(forms.ModelForm):
+    recipients = forms.ModelMultipleChoiceField(
+        queryset=User.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=True
+    )
+    
+    scheduled_at = forms.DateTimeField(
+        required=False,
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        input_formats=['%Y-%m-%dT%H:%M']
+    )
+    
+    class Meta:
+        model = Announcement
+        fields = ['title', 'message', 'priority', 'recipients', 'send_email', 'scheduled_at']
+        widgets = {
+            'message': forms.Textarea(attrs={'rows': 5}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['recipients'].queryset = User.objects.exclude(id=user.id)
+        
+        # Set current time as default for scheduled_at
+        self.fields['scheduled_at'].initial = timezone.now().strftime('%Y-%m-%dT%H:%M')
+
+
+
+
+        
+
+

@@ -20,6 +20,7 @@ from django.views.generic import DetailView
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Q
 from django.urls import reverse 
+from django.core.exceptions import PermissionDenied
 from .models import (
     User,
     Quiz, 
@@ -88,8 +89,6 @@ def custom_logout(request):
 @login_required
 def profile_view(request):
     return render(request, 'profile.html', {'user': request.user})
-
-
 
 
 
@@ -224,8 +223,85 @@ def quiz_history(request):
     }
     return render(request, 'quiz_history.html', context)
 
+# Mood Assessment and Quiz Recommendation Views
+@login_required
+def question_module_intro(request):
+    """Initial guide page when user clicks Questions button"""
+    if request.method == 'POST':
+        return redirect('mood_assessment')
+    return render(request, 'module_intro.html')
 
 
+
+from .forms import MoodAssessmentForm
+
+@login_required
+def mood_assessment(request):
+    """Page where user selects their current mood"""
+    if request.method == 'POST':
+        form = MoodAssessmentForm(request.POST)
+        if form.is_valid():
+            mood_level = form.cleaned_data['mood_level']
+            notes = request.POST.get('notes', '')
+            
+            # Create mood entry
+            mood_entry = MoodEntry.objects.create(
+                user=request.user,
+                mood_level=mood_level,
+                notes=notes,
+                recorded_at=timezone.now()
+            )
+            return redirect('mood_based_quizzes', mood_entry_id=mood_entry.id)
+    else:
+        form = MoodAssessmentForm()
+    
+    return render(request, 'mood_assessment.html', {'form': form})
+
+@login_required
+def mood_based_quizzes(request, mood_entry_id):
+    """Show quizzes based on the user's mood with filtering options"""
+    mood_entry = get_object_or_404(MoodEntry, pk=mood_entry_id, user=request.user)
+    
+    # Default difficulty mapping
+    difficulty_mapping = {
+        1: 'HARD',   # Very Negative
+        2: 'MEDIUM', # Negative
+        3: 'EASY',   # Neutral
+        4: 'MEDIUM', # Positive
+        5: 'HARD'    # Very Positive
+    }
+    recommended_difficulty = difficulty_mapping.get(mood_entry.mood_level, 'MEDIUM')
+    
+    # Get filter parameters
+    selected_category = request.GET.get('category')
+    selected_difficulty = request.GET.get('difficulty', recommended_difficulty)
+    
+    # Base query
+    quizzes = Quiz.objects.filter(
+        is_active=True
+    ).select_related('category')
+    
+    # Apply filters
+    if selected_difficulty:
+        quizzes = quizzes.filter(difficulty=selected_difficulty)
+    if selected_category:
+        quizzes = quizzes.filter(category__id=selected_category)
+    
+    # Get all categories for filter dropdown
+    categories = MentalHealthCategory.objects.all()
+    
+    context = {
+        'mood_entry': mood_entry,
+        'quizzes': quizzes,
+        'difficulty': selected_difficulty,
+        'mood_level_display': mood_entry.get_mood_level_display(),
+        'categories': categories,
+        'selected_category': selected_category,
+        'selected_difficulty': selected_difficulty,
+    }
+    return render(request, 'mood_based_quizzes.html', context)
+
+# Mood Tracking Views
 @login_required
 def mood_dashboard(request):
     # Get last 30 days of mood entries
@@ -314,14 +390,17 @@ def mood_entry_delete(request, pk):
 def quick_mood_entry(request):
     if request.method == 'POST':
         mood_level = request.POST.get('mood_level')
-        if mood_level:
-            MoodEntry.objects.create(
-                user=request.user,
-                mood_level=mood_level,
-                recorded_at=timezone.now()
-            )
-            messages.success(request, 'Quick mood entry recorded!')
-        return redirect('mood_dashboard')
+        if mood_level and mood_level.isdigit():
+            mood_level = int(mood_level)
+            if 1 <= mood_level <= 5:
+                MoodEntry.objects.create(
+                    user=request.user,
+                    mood_level=mood_level,
+                    recorded_at=timezone.now()
+                )
+                messages.success(request, 'Quick mood entry recorded!')
+                return redirect('mood_dashboard')
+        messages.error(request, 'Invalid mood selection')
     return redirect('mood_dashboard')
 
 
@@ -603,138 +682,6 @@ def dashboard(request):
     return render(request, 'userdashboard.html', context)
 
 
-
-
-
-
-from django.db.models import Count, Avg
-from datetime import timedelta
-from collections import defaultdict
-
-def admin_check(user):
-    return user.is_authenticated and user.user_type == 'ADMIN'
-
-@user_passes_test(admin_check)
-def admin_dashboard(request):
-    # User statistics
-    total_users = User.objects.count()
-    new_users = User.objects.filter(date_joined__gte=timezone.now()-timedelta(days=7)).count()
-    
-    # Calculate user type percentages
-    user_types = {
-        'students': User.objects.filter(user_type='STUDENT').count(),
-        'counselors': User.objects.filter(user_type='COUNSELOR').count(),
-        'admins': User.objects.filter(user_type='ADMIN').count()
-    }
-    total_user_types = sum(user_types.values())
-    if total_user_types > 0:
-        user_types.update({
-            'students_percentage': round((user_types['students'] / total_user_types) * 100),
-            'counselors_percentage': round((user_types['counselors'] / total_user_types) * 100),
-            'admins_percentage': round((user_types['admins'] / total_user_types) * 100)
-        })
-
-    # User growth data (last 30 days)
-    thirty_days_ago = timezone.now() - timedelta(days=30)
-    user_growth_data = User.objects.filter(
-        date_joined__gte=thirty_days_ago
-    ).extra({
-        'day': "date(date_joined)"
-    }).values('day').annotate(count=Count('id')).order_by('day')
-    
-    # Prepare labels and data for the chart
-    dates = [thirty_days_ago + timedelta(days=i) for i in range(31)]
-    growth_dict = {entry['day']: entry['count'] for entry in user_growth_data}
-    user_growth = {
-        'labels': [date.strftime('%b %d') for date in dates],
-        'data': [growth_dict.get(date.strftime('%Y-%m-%d'), 0) for date in dates],
-        'total': sum(growth_dict.values())
-    }
-
-    # Mood statistics (last 7 days)
-    mood_entries = MoodEntry.objects.filter(
-        recorded_at__gte=timezone.now()-timedelta(days=7))
-    mood_counts = mood_entries.values('mood_level').annotate(count=Count('id'))
-    
-    mood_stats = defaultdict(int)
-    for entry in mood_counts:
-        mood_stats[entry['mood_level']] = entry['count']
-    
-    total_mood_entries = sum(mood_stats.values())
-    if total_mood_entries > 0:
-        mood_stats.update({
-            'values': [mood_stats.get(i, 0) for i in range(1, 6)],
-            '1': round((mood_stats.get(1, 0) / total_mood_entries) * 100),
-            '2': round((mood_stats.get(2, 0) / total_mood_entries) * 100),
-            '3': round((mood_stats.get(3, 0) / total_mood_entries) * 100),
-            '4': round((mood_stats.get(4, 0) / total_mood_entries) * 100),
-            '5': round((mood_stats.get(5, 0) / total_mood_entries) * 100)
-        })
-
-    # Quiz statistics
-    quiz_stats = {
-        'avg_score': round(QuizAttempt.objects.aggregate(avg=Avg('score'))['avg'] or 0),
-        'completion_rate': 0,
-        'top_quizzes': [],
-        'top_scores': []
-    }
-    
-    # Calculate completion rate (quiz attempts vs students)
-    student_count = User.objects.filter(user_type='STUDENT').count()
-    if student_count > 0:
-        quiz_stats['completion_rate'] = round(
-            (QuizAttempt.objects.count() / student_count) * 100
-        )
-    
-    # Get top 3 quizzes by average score
-    top_quizzes = Quiz.objects.annotate(
-        avg_score=Avg('quizattempt__score')
-    ).order_by('-avg_score')[:3]
-    
-    quiz_stats['top_quizzes'] = [quiz.title for quiz in top_quizzes]
-    quiz_stats['top_scores'] = [round(quiz.avg_score or 0) for quiz in top_quizzes]
-
-    # Active users (last 7 days)
-    active_users_count = User.objects.filter(
-        last_login__gte=timezone.now()-timedelta(days=7)
-    ).count()
-    active_users_percentage = round((active_users_count / total_users) * 100) if total_users > 0 else 0
-
-    # Content statistics
-    content_stats = {
-        'quizzes': Quiz.objects.count(),
-        'resources': WellnessResource.objects.count(),
-        'forum_posts': ForumPost.objects.count(),
-        'events': Event.objects.count()
-    }
-
-    # Recent activity
-    recent_users = User.objects.order_by('-date_joined')[:5]
-    recent_quiz_attempts = QuizAttempt.objects.select_related('user', 'quiz').order_by('-completed_at')[:5]
-    recent_mood_entries = MoodEntry.objects.select_related('user').order_by('-recorded_at')[:5]
-
-    # Pending approvals
-    pending_counselors = CounselorProfile.objects.filter(is_approved=False).select_related('user')
-
-    context = {
-        # Existing context
-        'total_users': total_users,
-        'new_users': new_users,
-        'user_types': user_types,
-        'content_stats': content_stats,
-        'recent_users': recent_users,
-        'recent_quiz_attempts': recent_quiz_attempts,
-        'recent_mood_entries': recent_mood_entries,
-        'pending_counselors': pending_counselors,
-        
-        # New data for visualizations
-        'user_growth': user_growth,
-        'mood_stats': mood_stats,
-        'quiz_stats': quiz_stats,
-        'active_users_count': active_users_count,
-        'active_users_percentage': active_users_percentage
-    }
-    return render(request, 'admindashboard.html', context)
 
 
 from django.contrib.auth.decorators import login_required
@@ -1065,7 +1012,7 @@ from django.http import HttpResponseRedirect
 
 class CounselorDetailView(DetailView):
     model = CounselorProfile
-    template_name = 'counselors/counselor_detail.html'
+    template_name = 'counselor/counselor_detail.html'
     context_object_name = 'counselor'
     
     def get_context_data(self, **kwargs):
@@ -1121,3 +1068,638 @@ def add_review(request, pk):
         'form': form,
         'counselor': counselor
     })
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import user_passes_test
+from django.db.models import Count, Avg, Q, F, ExpressionWrapper, FloatField
+from django.utils import timezone
+from datetime import timedelta
+from django.contrib import messages
+from django.http import JsonResponse
+from django.core.paginator import Paginator
+from collections import defaultdict
+from .models import (
+    User, CounselorProfile, Quiz, QuizAttempt, 
+    MoodEntry, Appointment, Review, MentalHealthCategory,
+    WellnessResource, ForumPost, ForumComment, Event, Announcement
+)
+from .forms import (
+    UserCreationForm, CounselorApprovalForm, 
+    QuizForm, ResourceForm, AnnouncementForm
+)
+
+def admin_check(user):
+    """Check if user is an admin"""
+    return user.is_authenticated and user.user_type == 'ADMIN'
+
+@user_passes_test(admin_check)
+def admin_dashboard(request):
+    """Main admin dashboard view"""
+    # Determine time range from request (default to 7 days)
+    days_range = int(request.GET.get('range', 7))
+    start_date = timezone.now() - timedelta(days=days_range)
+    
+    # User statistics
+    total_users = User.objects.count()
+    new_users = User.objects.filter(date_joined__gte=start_date).count()
+    active_users = User.objects.filter(last_login__gte=start_date).count()
+    
+    # User type distribution
+    user_types = {
+        'students': User.objects.filter(user_type='STUDENT').count(),
+        'counselors': User.objects.filter(user_type='COUNSELOR').count(),
+        'admins': User.objects.filter(user_type='ADMIN').count(),
+    }
+    
+    # User growth data
+    user_growth_data = User.objects.filter(
+        date_joined__gte=start_date
+    ).extra({
+        'date': "date(date_joined)"
+    }).values('date').annotate(count=Count('id')).order_by('date')
+    
+    # Prepare user growth chart data
+    dates = [start_date + timedelta(days=i) for i in range(days_range + 1)]
+    growth_dict = {entry['date']: entry['count'] for entry in user_growth_data}
+    
+    user_growth = {
+        'labels': [date.strftime('%b %d') for date in dates],
+        'data': [growth_dict.get(date.date(), 0) for date in dates],
+        'total': sum(growth_dict.values()),
+        'peak_day': max(growth_dict.values(), default=0)
+    }
+    
+    # Mood statistics
+    mood_data = MoodEntry.objects.filter(
+        recorded_at__gte=start_date
+    ).values('mood_level').annotate(count=Count('id')).order_by('mood_level')
+    
+    mood_counts = {entry['mood_level']: entry['count'] for entry in mood_data}
+    total_mood_entries = sum(mood_counts.values())
+    
+    mood_stats = {
+        'values': [mood_counts.get(i, 0) for i in range(1, 6)],
+        'entries': total_mood_entries,
+        'negative': sum(mood_counts.get(i, 0) for i in range(1, 3)),  # Very Negative + Negative
+        'avg': MoodEntry.objects.filter(
+            recorded_at__gte=start_date
+        ).aggregate(avg=Avg('mood_level'))['avg'] or 0,
+        'levels': mood_counts
+    }
+    
+    # Quiz statistics
+    quiz_stats = {
+        'avg_score': round(QuizAttempt.objects.filter(
+            completed_at__gte=start_date
+        ).aggregate(avg=Avg('score'))['avg'] or 0, 1),
+        'completion_rate': round((
+            QuizAttempt.objects.filter(
+                is_completed=True,
+                completed_at__gte=start_date
+            ).count() / user_types['students'] * 100
+        ) if user_types['students'] > 0 else 0, 1)
+    }
+    
+    # Top quizzes by attempts - FIXED: Changed quiz_attempts to quizattempt
+    top_quizzes = Quiz.objects.annotate(
+        attempts=Count('quizattempt'),
+        avg_score=Avg('quizattempt__score')
+    ).order_by('-attempts')[:5]
+    
+    # At-risk users (based on mood and quiz performance)
+    at_risk_users = User.objects.filter(
+        Q(mood_entries__mood_level__lte=2, mood_entries__recorded_at__gte=start_date) |
+        Q(quiz_attempts__score__lt=40, quiz_attempts__completed_at__gte=start_date)
+    ).distinct().annotate(
+        bad_mood_count=Count('mood_entries', filter=Q(mood_entries__mood_level__lte=2)),
+        low_score_count=Count('quiz_attempts', filter=Q(quiz_attempts__score__lt=40)),
+        risk_score=ExpressionWrapper(
+            F('bad_mood_count') * 0.7 + F('low_score_count') * 0.3,
+            output_field=FloatField()
+        )
+    ).order_by('-risk_score')[:10]
+    
+    # Prepare at-risk users data
+    at_risk_users_data = []
+    for user in at_risk_users:
+        last_mood = user.mood_entries.order_by('-recorded_at').first()
+        last_quiz = user.quiz_attempts.order_by('-completed_at').first()
+        at_risk_users_data.append({
+            'user': user,
+            'risk_score': min(100, user.risk_score * 10),  # Scale to 100
+            'last_mood': last_mood,
+            'last_quiz': last_quiz,
+            'bad_mood_count': user.bad_mood_count,
+            'low_score_count': user.low_score_count
+        })
+    
+    # High-risk quizzes (low average scores) - FIXED: Changed quiz_attempts to quizattempt
+    high_risk_quizzes = Quiz.objects.annotate(
+        avg_score=Avg('quizattempt__score'),
+        attempt_count=Count('quizattempt')
+    ).filter(
+        attempt_count__gte=5,
+        avg_score__lt=50
+    ).order_by('avg_score')[:3]
+    
+    # Counselor statistics
+    counselor_stats = {
+        'total': user_types['counselors'],
+        'approved': CounselorProfile.objects.filter(is_approved=True).count(),
+        'pending': CounselorProfile.objects.filter(is_approved=False).count(),
+        'avg_rating': round(Review.objects.aggregate(avg=Avg('rating'))['avg'] or 0, 1)
+    }
+    
+    # Recent activity
+    pending_counselors = CounselorProfile.objects.filter(
+        is_approved=False
+    ).select_related('user')[:5]
+    
+    recent_appointments = Appointment.objects.select_related(
+        'counselor', 'client'
+    ).order_by('-datetime')[:5]
+    
+    # Prepare recent activity feed
+    recent_activity = []
+    
+    # Add new users
+    for user in User.objects.filter(date_joined__gte=start_date).order_by('-date_joined')[:3]:
+        recent_activity.append({
+            'title': 'New User Registered',
+            'description': f"{user.username} ({user.get_user_type_display()})",
+            'timestamp': user.date_joined,
+            'icon': 'person-plus',
+            'color': 'primary'
+        })
+    
+    # Add quiz attempts
+    for attempt in QuizAttempt.objects.filter(completed_at__gte=start_date).select_related('user', 'quiz').order_by('-completed_at')[:3]:
+        recent_activity.append({
+            'title': 'Quiz Completed',
+            'description': f"{attempt.user.username} scored {attempt.score:.0f}% on {attempt.quiz.title}",
+            'timestamp': attempt.completed_at,
+            'icon': 'clipboard-check',
+            'color': 'success'
+        })
+    
+    # Add mood entries
+    for mood in MoodEntry.objects.filter(recorded_at__gte=start_date).select_related('user').order_by('-recorded_at')[:3]:
+        recent_activity.append({
+            'title': 'Mood Recorded',
+            'description': f"{mood.user.username} reported {mood.get_mood_level_display()} mood",
+            'timestamp': mood.recorded_at,
+            'icon': 'emoji-frown' if mood.mood_level <= 2 else 'emoji-smile',
+            'color': 'danger' if mood.mood_level <= 2 else 'success'
+        })
+    
+    # Sort recent activity by timestamp
+    recent_activity.sort(key=lambda x: x['timestamp'], reverse=True)
+    
+    context = {
+        'total_users': total_users,
+        'new_users': new_users,
+        'active_users': active_users,
+        'user_types': user_types,
+        'user_growth': user_growth,
+        'mood_stats': mood_stats,
+        'quiz_stats': quiz_stats,
+        'top_quizzes': [
+            {
+                'title': quiz.title,
+                'attempts': quiz.attempts,
+                'avg_score': round(quiz.avg_score or 0, 1),
+                'category': quiz.category
+            }
+            for quiz in top_quizzes
+        ],
+        'at_risk_users': at_risk_users_data,
+        'high_risk_quizzes': [
+            {
+                'quiz': quiz,
+                'avg_score': round(quiz.avg_score or 0, 1),
+                'attempt_count': quiz.attempt_count
+            }
+            for quiz in high_risk_quizzes
+        ],
+        'counselor_stats': counselor_stats,
+        'pending_counselors': pending_counselors,
+        'recent_appointments': recent_appointments,
+        'recent_activity': recent_activity[:5],  # Show only 5 most recent
+        'days_range': days_range
+    }
+    
+    return render(request, 'admindashboard.html', context)
+
+
+
+@user_passes_test(admin_check)
+def user_management(request):
+    """View for managing all users"""
+    users = User.objects.all().order_by('-date_joined')
+    user_type = request.GET.get('type', '')
+    
+    if user_type:
+        users = users.filter(user_type=user_type)
+    
+    search_query = request.GET.get('q', '')
+    if search_query:
+        users = users.filter(
+            Q(username__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query)
+        )
+    
+    paginator = Paginator(users, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'users': page_obj,
+        'user_types': User.USER_TYPES,
+        'selected_type': user_type,
+        'search_query': search_query
+    }
+    return render(request, 'admin/user_management.html', context)
+
+@user_passes_test(admin_check)
+def create_user(request):
+    """View for creating new users"""
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST, request.FILES)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, f'User {user.username} created successfully!')
+            return redirect('admin_user_management')
+    else:
+        form = UserCreationForm()
+    
+    return render(request, 'admin/create_user.html', {'form': form})
+
+@user_passes_test(admin_check)
+def edit_user(request, user_id):
+    """View for editing existing users"""
+    user = get_object_or_404(User, id=user_id)
+    
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, f'User {user.username} updated successfully!')
+            return redirect('admin_user_management')
+    else:
+        form = UserCreationForm(instance=user)
+    
+    return render(request, 'admin/edit_user.html', {'form': form, 'user': user})
+
+@user_passes_test(admin_check)
+def counselor_applications(request):
+    """View for managing counselor applications"""
+    applications = CounselorProfile.objects.filter(is_approved=False).select_related('user')
+    search_query = request.GET.get('q', '')
+    
+    if search_query:
+        applications = applications.filter(
+            Q(user__username__icontains=search_query) |
+            Q(specialization__icontains=search_query) |
+            Q(qualifications__icontains=search_query)
+        )
+    
+    paginator = Paginator(applications, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'applications': page_obj,
+        'search_query': search_query
+    }
+    return render(request, 'admin/counselor_applications.html', context)
+
+@user_passes_test(admin_check)
+def view_counselor_application(request, application_id):
+    """View for reviewing a specific counselor application"""
+    application = get_object_or_404(CounselorProfile, id=application_id)
+    
+    if request.method == 'POST':
+        form = CounselorApprovalForm(request.POST, instance=application)
+        if form.is_valid():
+            counselor = form.save(commit=False)
+            if form.cleaned_data['approval_action'] == 'approve':
+                counselor.is_approved = True
+                counselor.user.user_type = 'COUNSELOR'
+                counselor.user.save()
+                messages.success(request, 'Counselor approved successfully!')
+            else:
+                messages.success(request, 'Counselor application rejected.')
+            counselor.save()
+            return redirect('admin_counselor_applications')
+    else:
+        form = CounselorApprovalForm(instance=application)
+    
+    return render(request, 'admin/view_application.html', {
+        'application': application,
+        'form': form
+    })
+
+@user_passes_test(admin_check)
+def approve_counselor(request, counselor_id):
+    """Quick approve counselor view"""
+    counselor = get_object_or_404(CounselorProfile, id=counselor_id)
+    counselor.is_approved = True
+    counselor.user.user_type = 'COUNSELOR'
+    counselor.user.save()
+    counselor.save()
+    messages.success(request, f'Counselor {counselor.user.username} approved successfully!')
+    return redirect('admin_counselor_applications')
+
+@user_passes_test(admin_check)
+def reject_counselor(request, counselor_id):
+    """Quick reject counselor view"""
+    counselor = get_object_or_404(CounselorProfile, id=counselor_id)
+    username = counselor.user.username
+    counselor.delete()
+    messages.success(request, f'Counselor application for {username} rejected.')
+    return redirect('admin_counselor_applications')
+
+@user_passes_test(admin_check)
+def at_risk_users(request):
+    """Detailed view of at-risk users"""
+    days_range = int(request.GET.get('days', 7))
+    start_date = timezone.now() - timedelta(days=days_range)
+    
+    at_risk_users = User.objects.filter(
+        Q(mood_entries__mood_level__lte=2, mood_entries__recorded_at__gte=start_date) |
+        Q(quiz_attempts__score__lt=40, quiz_attempts__completed_at__gte=start_date)
+    ).distinct().annotate(
+        bad_mood_count=Count('mood_entries', filter=Q(mood_entries__mood_level__lte=2)),
+        low_score_count=Count('quiz_attempts', filter=Q(quiz_attempts__score__lt=40)),
+        risk_score=ExpressionWrapper(
+            F('bad_mood_count') * 0.7 + F('low_score_count') * 0.3,
+            output_field=FloatField()
+        )
+    ).order_by('-risk_score')
+    
+    search_query = request.GET.get('q', '')
+    if search_query:
+        at_risk_users = at_risk_users.filter(
+            Q(username__icontains=search_query) |
+            Q(email__icontains=search_query)
+        )
+    
+    paginator = Paginator(at_risk_users, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'users': page_obj,
+        'days_range': days_range,
+        'search_query': search_query
+    }
+    return render(request, 'admin/at_risk_users.html', context)
+
+@user_passes_test(admin_check)
+def user_detail(request, user_id):
+    """Detailed view of a specific user"""
+    user = get_object_or_404(User, id=user_id)
+    
+    # Mood history (last 30 days)
+    mood_history = MoodEntry.objects.filter(
+        user=user,
+        recorded_at__gte=timezone.now() - timedelta(days=30)
+    ).order_by('recorded_at')
+    
+    # Quiz attempts
+    quiz_attempts = QuizAttempt.objects.filter(user=user).select_related('quiz').order_by('-completed_at')[:10]
+    
+    # Appointments
+    appointments = Appointment.objects.filter(
+        Q(client=user) | Q(counselor__user=user)
+    ).select_related('counselor', 'client').order_by('-datetime')[:10]
+    
+    context = {
+        'user': user,
+        'mood_history': mood_history,
+        'quiz_attempts': quiz_attempts,
+        'appointments': appointments
+    }
+    
+    return render(request, 'admin/user_detail.html', context)
+
+@user_passes_test(admin_check)
+def quiz_management(request):
+    """View for managing quizzes"""
+    quizzes = Quiz.objects.all().order_by('-created_at')
+    category_id = request.GET.get('category', '')
+    
+    if category_id:
+        quizzes = quizzes.filter(category_id=category_id)
+    
+    search_query = request.GET.get('q', '')
+    if search_query:
+        quizzes = quizzes.filter(
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    
+    paginator = Paginator(quizzes, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'quizzes': page_obj,
+        'categories': MentalHealthCategory.objects.all(),
+        'selected_category': category_id,
+        'search_query': search_query
+    }
+    return render(request, 'admin/quiz_management.html', context)
+
+@user_passes_test(admin_check)
+def create_quiz(request):
+    """View for creating new quizzes"""
+    if request.method == 'POST':
+        form = QuizForm(request.POST)
+        if form.is_valid():
+            quiz = form.save()
+            messages.success(request, f'Quiz "{quiz.title}" created successfully!')
+            return redirect('admin_quiz_management')
+    else:
+        form = QuizForm()
+    
+    return render(request, 'admin/create_quiz.html', {'form': form})
+
+@user_passes_test(admin_check)
+def quiz_analytics(request, quiz_id):
+    """Detailed analytics for a specific quiz"""
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    
+    # Attempt statistics
+    attempts = QuizAttempt.objects.filter(quiz=quiz)
+    total_attempts = attempts.count()
+    avg_score = attempts.aggregate(avg=Avg('score'))['avg'] or 0
+    
+    # Score distribution
+    score_distribution = attempts.extra({
+        'score_range': "FLOOR(score/10)*10"
+    }).values('score_range').annotate(
+        count=Count('id'),
+        percentage=ExpressionWrapper(
+            Count('id') * 100.0 / total_attempts,
+            output_field=FloatField()
+        )
+    ).order_by('score_range')
+    
+    # Completion rate
+    completion_rate = round((
+        attempts.filter(is_completed=True).count() / total_attempts * 100
+    ) if total_attempts > 0 else 0, 1)
+    
+    # Recent attempts
+    recent_attempts = attempts.select_related('user').order_by('-completed_at')[:10]
+    
+    context = {
+        'quiz': quiz,
+        'total_attempts': total_attempts,
+        'avg_score': round(avg_score, 1),
+        'completion_rate': completion_rate,
+        'score_distribution': score_distribution,
+        'recent_attempts': recent_attempts
+    }
+    
+    return render(request, 'admin/quiz_analytics.html', context)
+
+@user_passes_test(admin_check)
+def resource_management(request):
+    """View for managing wellness resources"""
+    resources = WellnessResource.objects.all().order_by('-created_at')
+    resource_type = request.GET.get('type', '')
+    
+    if resource_type:
+        resources = resources.filter(resource_type=resource_type)
+    
+    search_query = request.GET.get('q', '')
+    if search_query:
+        resources = resources.filter(
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    
+    paginator = Paginator(resources, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'resources': page_obj,
+        'resource_types': WellnessResource.RESOURCE_TYPES,
+        'selected_type': resource_type,
+        'search_query': search_query
+    }
+    return render(request, 'admin/resource_management.html', context)
+
+@user_passes_test(admin_check)
+def create_resource(request):
+    """View for creating new wellness resources"""
+    if request.method == 'POST':
+        form = ResourceForm(request.POST, request.FILES)
+        if form.is_valid():
+            resource = form.save()
+            messages.success(request, f'Resource "{resource.title}" created successfully!')
+            return redirect('admin_resource_management')
+    else:
+        form = ResourceForm()
+    
+    return render(request, 'admin/create_resource.html', {'form': form})
+
+from django.contrib import messages
+from django.contrib.auth.decorators import user_passes_test
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.shortcuts import render, redirect, get_object_or_404
+from django.conf import settings
+from django.core.mail import send_mail
+import logging
+
+logger = logging.getLogger(__name__)
+
+@user_passes_test(admin_check)
+def announcement_list(request):
+    """List announcements with filtering and pagination"""
+    try:
+        announcements = Announcement.objects.filter(created_by=request.user).order_by('-created_at')
+        
+        # Filtering
+        priority = request.GET.get('priority')
+        if priority:
+            announcements = announcements.filter(priority=priority)
+        
+        status = request.GET.get('status')
+        if status == 'published':
+            announcements = announcements.filter(is_published=True)
+        elif status == 'draft':
+            announcements = announcements.filter(is_published=False)
+        
+        paginator = Paginator(announcements, 10)
+        page_number = request.GET.get('page')
+        
+        try:
+            page_obj = paginator.page(page_number)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+        
+        context = {
+            'announcements': page_obj,
+            'priority_choices': Announcement.PRIORITY_CHOICES,
+        }
+        return render(request, 'admin/announcement_list.html', context)
+    
+    except Exception as e:
+        logger.error(f"Error in announcement_list: {str(e)}")
+        messages.error(request, "An error occurred while loading announcements.")
+        return redirect('admin_dashboard')  # Redirect to a safe page
+
+
+@user_passes_test(admin_check)
+def send_alert(request):
+    """View for sending emergency alerts"""
+    if request.method == 'POST':
+        recipient_id = request.POST.get('recipient')
+        message = request.POST.get('message')
+        
+        if recipient_id and message:
+            recipient = get_object_or_404(User, id=recipient_id)
+            # Process sending alert (implementation depends on your notification system)
+            messages.success(request, f'Alert sent to {recipient.username}!')
+            return redirect('admin_dashboard')
+    
+    return render(request, 'admin/send_alert.html')
+
+@user_passes_test(admin_check)
+def get_analytics_data(request):
+    """API endpoint for fetching analytics data"""
+    days = int(request.GET.get('days', 7))
+    start_date = timezone.now() - timedelta(days=days)
+    
+    # User growth data
+    user_growth = User.objects.filter(
+        date_joined__gte=start_date
+    ).extra({
+        'date': "date(date_joined)"
+    }).values('date').annotate(count=Count('id')).order_by('date')
+    
+    # Mood data
+    mood_data = MoodEntry.objects.filter(
+        recorded_at__gte=start_date
+    ).values('mood_level').annotate(count=Count('id')).order_by('mood_level')
+    
+    # Quiz attempts
+    quiz_attempts = QuizAttempt.objects.filter(
+        completed_at__gte=start_date
+    ).count()
+    
+    data = {
+        'user_growth': list(user_growth),
+        'mood_data': list(mood_data),
+        'quiz_attempts': quiz_attempts
+    }
+    
+    return JsonResponse(data)

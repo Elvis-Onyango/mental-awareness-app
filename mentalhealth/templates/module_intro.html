@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg mt-5">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="text-center mb-0">Welcome to Mental Health Quizzes</h2>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-clipboard2-heart-fill text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <p class="lead">Our personalized quizzes help you reflect on your mental wellbeing based on your current mood.</p>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        The process takes about 10 minutes and is completely confidential.
+                    </div>
+                    
+                    <form method="post" class="text-center mt-4">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-lg px-5">
+                            <i class="bi bi-arrow-right me-2"></i> Begin Mood Assessment
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
