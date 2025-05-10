@@ -18,7 +18,7 @@ from .views import (
     approve_counselor, reject_counselor, at_risk_users,
     quiz_management, create_quiz, quiz_analytics,
     resource_management, create_resource,
-    send_alert, get_analytics_data
+    send_alert, get_analytics_data, user_status_check
 )
 
 urlpatterns = [
@@ -33,10 +33,16 @@ urlpatterns = [
     path('dashboard/admin', admin_dashboard, name='admin_dashboard'),
     path('counselor/dashboard/', counselor_dashboard, name='counselor_dashboard'),
     
-    # New Mood-Based Quiz Flow URLs
     path('questions/', question_module_intro, name='question_module_intro'),
-    path('mood-assessment/', mood_assessment, name='mood_assessment'),
-    path('mood-quizzes/<int:mood_entry_id>/', mood_based_quizzes, name='mood_based_quizzes'),
+    
+    # New two-step assessment flow
+    path('assessment/status/', user_status_check, name='user_status_check'),
+    path('assessment/mood/', mood_assessment, name='mood_assessment'),
+    path('assessment/quizzes/<int:mood_entry_id>/', mood_based_quizzes, name='mood_based_quizzes'),
+    
+    # Keep the old mood assessment URL for backward compatibility
+    path('mood-assessment/', mood_assessment, name='legacy_mood_assessment'),
+    path('mood-quizzes/<int:mood_entry_id>/', mood_based_quizzes, name='legacy_mood_based_quizzes'),
     
     # Quiz URLs - organized in a logical flow
     path('quizzes/', question_module_intro, name='quiz_intro'),  # New entry point

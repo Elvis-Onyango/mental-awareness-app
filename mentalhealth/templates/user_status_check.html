@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}How Are You Doing? | Mental Wellness{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Status Assessment Card -->
+            <div class="card border-0 shadow-lg overflow-hidden">
+                <!-- Card Header with Gradient Background -->
+                <div class="card-header py-4 text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h1 class="h3 mb-1">How are you doing today?</h1>
+                            <p class="mb-0 opacity-75">This helps us recommend the most suitable content for you</p>
+                        </div>
+                        <i class="bi bi-person-lines-fill fs-1"></i>
+                    </div>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" id="statusAssessmentForm" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Status Options -->
+                        <div class="row g-3">
+                            <!-- Struggling -->
+                            <div class="col-12 col-md-6">
+                                <input type="radio" class="btn-check" name="status" id="status1" value="STRUGGLING" autocomplete="off" required>
+                                <label class="btn btn-status w-100 h-100 p-3 text-start rounded-3" for="status1">
+                                    <div class="d-flex align-items-center">
+                                        <div class="status-icon me-3">
+                                            <div class="status-circle bg-danger bg-opacity-10 text-danger">
+                                                <i class="bi bi-heart-pulse fs-3"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="d-block fw-medium">I need help with something specific</span>
+                                            <small class="text-muted d-block">Feeling overwhelmed or struggling</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <!-- Exploring -->
+                            <div class="col-12 col-md-6">
+                                <input type="radio" class="btn-check" name="status" id="status2" value="EXPLORING" autocomplete="off">
+                                <label class="btn btn-status w-100 h-100 p-3 text-start rounded-3" for="status2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="status-icon me-3">
+                                            <div class="status-circle bg-primary bg-opacity-10 text-primary">
+                                                <i class="bi bi-search fs-3"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="d-block fw-medium">Just exploring mental health topics</span>
+                                            <small class="text-muted d-block">Learning and self-discovery</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <!-- Maintaining -->
+                            <div class="col-12 col-md-6">
+                                <input type="radio" class="btn-check" name="status" id="status3" value="MAINTAINING" autocomplete="off">
+                                <label class="btn btn-status w-100 h-100 p-3 text-start rounded-3" for="status3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="status-icon me-3">
+                                            <div class="status-circle bg-success bg-opacity-10 text-success">
+                                                <i class="bi bi-check-circle fs-3"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="d-block fw-medium">Doing okay, maintaining my wellbeing</span>
+                                            <small class="text-muted d-block">Keeping up with mental health</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <!-- Celebrating -->
+                            <div class="col-12 col-md-6">
+                                <input type="radio" class="btn-check" name="status" id="status4" value="CELEBRATING" autocomplete="off">
+                                <label class="btn btn-status w-100 h-100 p-3 text-start rounded-3" for="status4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="status-icon me-3">
+                                            <div class="status-circle bg-warning bg-opacity-10 text-warning">
+                                                <i class="bi bi-emoji-laughing fs-3"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="d-block fw-medium">Feeling great and want to celebrate!</span>
+                                            <small class="text-muted d-block">Positive and thriving</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid mt-5">
+                            <button type="submit" class="btn btn-primary btn-lg py-3">
+                                <i class="bi bi-arrow-right-circle me-2"></i>
+                                Continue to Mood Assessment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Help Text -->
+            <div class="text-center mt-4 text-muted">
+                <small>
+                    <i class="bi bi-lock-fill me-1"></i>
+                    Your responses are confidential and securely stored
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Status Selection Styles */
+    .btn-status {
+        border: 1px solid var(--bs-border-color);
+        transition: all 0.2s ease;
+        background-color: var(--bs-body-bg);
+    }
+    
+    .btn-status:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .btn-check:checked + .btn-status {
+        border-color: var(--bs-primary);
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .status-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-check:checked + .btn-status .status-circle {
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('statusAssessmentForm');
+    
+    form.addEventListener('submit', function(event) {
+        if (!document.querySelector('input[name="status"]:checked')) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Show toast notification
+            const toast = new bootstrap.Toast(document.getElementById('validationToast'));
+            toast.show();
+        }
+        
+        form.classList.add('was-validated');
+    }, false);
+    
+    // Add hover effects
+    const statusOptions = document.querySelectorAll('.btn-status');
+    statusOptions.forEach(option => {
+        option.addEventListener('mouseenter', function() {
+            if (!this.previousElementSibling.checked) {
+                this.style.transform = 'translateY(-3px)';
+                this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+            }
+        });
+        
+        option.addEventListener('mouseleave', function() {
+            if (!this.previousElementSibling.checked) {
+                this.style.transform = '';
+                this.style.boxShadow = '';
+            }
+        });
+    });
+});
+</script>
+
+<!-- Validation Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="validationToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Please select how you're doing today
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}

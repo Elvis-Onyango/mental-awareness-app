@@ -228,28 +228,43 @@ def quiz_history(request):
 def question_module_intro(request):
     """Initial guide page when user clicks Questions button"""
     if request.method == 'POST':
-        return redirect('mood_assessment')
+        return redirect('user_status_check')
     return render(request, 'module_intro.html')
 
 
 
+# views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from .models import MoodEntry
 from .forms import MoodAssessmentForm
 
 @login_required
+def user_status_check(request):
+    """First step - assess user's general status"""
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        if status:
+            # Store status in session for use in next step
+            request.session['user_status'] = status
+            return redirect('mood_assessment')
+    
+    return render(request, 'user_status_check.html')
+
+@login_required
 def mood_assessment(request):
-    """Page where user selects their current mood"""
+    """Second step - assess user's current mood"""
     if request.method == 'POST':
         form = MoodAssessmentForm(request.POST)
         if form.is_valid():
-            mood_level = form.cleaned_data['mood_level']
-            notes = request.POST.get('notes', '')
-            
-            # Create mood entry
+            # Create mood entry with both status and mood
             mood_entry = MoodEntry.objects.create(
                 user=request.user,
-                mood_level=mood_level,
-                notes=notes,
-                recorded_at=timezone.now()
+                mood_level=form.cleaned_data['mood_level'],
+                notes=form.cleaned_data.get('notes', ''),
+                recorded_at=timezone.now(),
+                status=request.session.get('user_status', 'EXPLORING')
             )
             return redirect('mood_based_quizzes', mood_entry_id=mood_entry.id)
     else:
@@ -259,33 +274,56 @@ def mood_assessment(request):
 
 @login_required
 def mood_based_quizzes(request, mood_entry_id):
-    """Show quizzes based on the user's mood with filtering options"""
+    """Show quizzes based on both status and mood"""
     mood_entry = get_object_or_404(MoodEntry, pk=mood_entry_id, user=request.user)
     
-    # Default difficulty mapping
-    difficulty_mapping = {
-        1: 'HARD',   # Very Negative
-        2: 'MEDIUM', # Negative
-        3: 'EASY',   # Neutral
-        4: 'MEDIUM', # Positive
-        5: 'HARD'    # Very Positive
+    # Enhanced recommendation logic
+    recommendations = {
+        'STRUGGLING': {
+            'difficulty': 'EASY',
+            'categories': ['depression', 'anxiety', 'stress'],
+            'message': "We recommend gentle resources to help you through this time"
+        },
+        'EXPLORING': {
+            'difficulty': {
+                1: 'HARD', 2: 'MEDIUM', 3: 'EASY', 
+                4: 'MEDIUM', 5: 'HARD'
+            }.get(mood_entry.mood_level, 'MEDIUM'),
+            'categories': None,  # All categories
+            'message': "Explore these resources based on your current mood"
+        },
+        'MAINTAINING': {
+            'difficulty': {
+                1: 'HARD', 2: 'HARD', 3: 'MEDIUM', 
+                4: 'MEDIUM', 5: 'EASY'
+            }.get(mood_entry.mood_level, 'MEDIUM'),
+            'categories': ['wellness', 'mindfulness', 'self-care'],
+            'message': "Resources to help maintain your wellbeing"
+        },
+        'CELEBRATING': {
+            'difficulty': 'HARD',
+            'categories': ['happiness', 'gratitude', 'positive-psychology'],
+            'message': "Build on your positive momentum with these resources"
+        }
     }
-    recommended_difficulty = difficulty_mapping.get(mood_entry.mood_level, 'MEDIUM')
     
-    # Get filter parameters
-    selected_category = request.GET.get('category')
-    selected_difficulty = request.GET.get('difficulty', recommended_difficulty)
+    status = mood_entry.status or 'EXPLORING'
+    recommendation = recommendations.get(status, recommendations['EXPLORING'])
     
     # Base query
-    quizzes = Quiz.objects.filter(
-        is_active=True
-    ).select_related('category')
+    quizzes = Quiz.objects.filter(is_active=True).select_related('category')
     
-    # Apply filters
+    # Apply difficulty filter
+    selected_difficulty = request.GET.get('difficulty', recommendation['difficulty'])
     if selected_difficulty:
         quizzes = quizzes.filter(difficulty=selected_difficulty)
+    
+    # Apply category filter if specified in recommendation
+    selected_category = request.GET.get('category')
     if selected_category:
         quizzes = quizzes.filter(category__id=selected_category)
+    elif recommendation['categories']:
+        quizzes = quizzes.filter(category__name__in=recommendation['categories'])
     
     # Get all categories for filter dropdown
     categories = MentalHealthCategory.objects.all()
@@ -293,6 +331,7 @@ def mood_based_quizzes(request, mood_entry_id):
     context = {
         'mood_entry': mood_entry,
         'quizzes': quizzes,
+        'recommendation_message': recommendation['message'],
         'difficulty': selected_difficulty,
         'mood_level_display': mood_entry.get_mood_level_display(),
         'categories': categories,
@@ -300,7 +339,6 @@ def mood_based_quizzes(request, mood_entry_id):
         'selected_difficulty': selected_difficulty,
     }
     return render(request, 'mood_based_quizzes.html', context)
-
 # Mood Tracking Views
 @login_required
 def mood_dashboard(request):

@@ -1,33 +1,146 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Get Started | Mental Wellness Quizzes{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-lg mt-5">
-                <div class="card-header bg-primary text-white">
-                    <h2 class="text-center mb-0">Welcome to Mental Health Quizzes</h2>
+        <div class="col-lg-10 col-xl-8">
+            <!-- Hero Card -->
+            <div class="card border-0 shadow-lg overflow-hidden">
+                <!-- Card Header with Gradient -->
+                <div class="card-header py-4 text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h1 class="h2 mb-1">Welcome to Your Wellness Journey</h1>
+                            <p class="mb-0 opacity-90">Personalized mental health assessments tailored to you</p>
+                        </div>
+                        <i class="bi bi-heart-pulse fs-1"></i>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="text-center mb-4">
-                        <i class="bi bi-clipboard2-heart-fill text-primary" style="font-size: 3rem;"></i>
-                    </div>
-                    <p class="lead">Our personalized quizzes help you reflect on your mental wellbeing based on your current mood.</p>
-                    
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle-fill me-2"></i>
-                        The process takes about 10 minutes and is completely confidential.
+                
+                <!-- Card Body -->
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-5">
+                        <img src="{% static 'images/mindfulness.svg' %}" alt="Mental Wellness" class="img-fluid" style="max-height: 180px;">
                     </div>
                     
-                    <form method="post" class="text-center mt-4">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary btn-lg px-5">
-                            <i class="bi bi-arrow-right me-2"></i> Begin Mood Assessment
-                        </button>
-                    </form>
+                    <!-- Features Grid -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="me-3 text-primary">
+                                    <i class="bi bi-person-check-fill fs-3"></i>
+                                </div>
+                                <div>
+                                    <h3 class="h5 mb-2">Personalized</h3>
+                                    <p class="mb-0 text-muted">Quizzes adapt to your current emotional state for relevant insights</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="me-3 text-primary">
+                                    <i class="bi bi-shield-lock-fill fs-3"></i>
+                                </div>
+                                <div>
+                                    <h3 class="h5 mb-2">Confidential</h3>
+                                    <p class="mb-0 text-muted">Your responses are private and securely stored</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="me-3 text-primary">
+                                    <i class="bi bi-lightbulb-fill fs-3"></i>
+                                </div>
+                                <div>
+                                    <h3 class="h5 mb-2">Insightful</h3>
+                                    <p class="mb-0 text-muted">Gain valuable perspectives on your mental wellbeing</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="me-3 text-primary">
+                                    <i class="bi bi-bookmark-heart-fill fs-3"></i>
+                                </div>
+                                <div>
+                                    <h3 class="h5 mb-2">Supportive</h3>
+                                    <p class="mb-0 text-muted">Get tailored recommendations based on your needs</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Process Overview -->
+                    <div class="bg-light rounded-3 p-4 mb-4">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-info-circle-fill text-primary mt-1 me-3"></i>
+                            <div>
+                                <h3 class="h5 mb-2">How It Works</h3>
+                                <ol class="mb-0">
+                                    <li class="mb-2">Share how you're feeling today</li>
+                                    <li class="mb-2">Complete a brief mood assessment</li>
+                                    <li>Receive personalized quiz recommendations</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Section -->
+                    <div class="text-center mt-5">
+                        <form method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary btn-lg px-5 py-3">
+                                <i class="bi bi-arrow-right-circle me-2"></i>
+                                Begin Your Assessment
+                            </button>
+                        </form>
+                        <p class="small text-muted mt-3">
+                            <i class="bi bi-clock-history me-1"></i>
+                            Takes about 10 minutes
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Privacy Assurance -->
+            <div class="text-center mt-4">
+                <div class="d-inline-flex align-items-center bg-light rounded-pill px-3 py-1">
+                    <i class="bi bi-shield-check text-primary me-2"></i>
+                    <small class="text-muted">All data is encrypted and protected</small>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .card-header {
+        border-radius: 0 !important;
+    }
+    
+    .bg-light {
+        background-color: #f8f9fa !important;
+    }
+    
+    .btn-primary {
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    @media (max-width: 767.98px) {
+        .card-body {
+            padding: 1.5rem;
+        }
+    }
+</style>
 {% endblock %}

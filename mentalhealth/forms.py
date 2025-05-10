@@ -1,4 +1,3 @@
-# accounts/forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import User,CounselorProfile,MoodEntry, MentalHealthCategory
@@ -318,7 +317,36 @@ class AnnouncementForm(forms.ModelForm):
 
 
 
+# forms.py
+from django import forms
 
+class UserStatusForm(forms.Form):
+    STATUS_CHOICES = [
+        ('STRUGGLING', 'I need help with something specific'),
+        ('EXPLORING', 'Just exploring mental health topics'),
+        ('MAINTAINING', 'Doing okay, maintaining my wellbeing'),
+        ('CELEBRATING', 'Feeling great and want to celebrate!'),
+    ]
+    
+    status = forms.ChoiceField(
+        choices=STATUS_CHOICES,
+        widget=forms.RadioSelect,
+        label="How are you doing today?",
+        required=True
+    )
+
+class MoodAssessmentForm(forms.Form):
+    mood_level = forms.ChoiceField(
+        choices=MoodEntry.MOOD_CHOICES,
+        widget=forms.RadioSelect,
+        label="What is your mood today?",
+        required=True
+    )
+    notes = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=False,
+        label="Any additional notes about how you're feeling?"
+    )
         
 
 

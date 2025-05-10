@@ -34,20 +34,21 @@
                     {% else %}
                         <div class="space-y-3">
                             {% for option in options %}
-                            <div class="flex items-center">
-                                <input 
-                                    id="option-{{ option.id }}"
-                                    name="selected_option"
-                                    type="{% if question.question_type == 'MC' %}checkbox{% else %}radio{% endif %}" 
-                                    value="{{ option.id }}"
-                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                    required="{% if question.question_type == 'TF' %}required{% endif %}"
-                                >
-                                <label for="option-{{ option.id }}" class="ml-3 block text-sm font-medium text-gray-700">
-                                    {{ option.text }}
-                                </label>
-                            </div>
-                            {% endfor %}
+<div class="flex items-center">
+    <input 
+        id="option-{{ option.id }}"
+        name="{% if question.question_type == 'MC' %}selected_option[] {% else %}selected_option{% endif %}"
+        type="{% if question.question_type == 'MC' %}checkbox{% else %}radio{% endif %}" 
+        value="{{ option.id }}"
+        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+        {% if question.question_type != 'MC' and question.question_type == 'TF' %}required{% endif %}
+    >
+    <label for="option-{{ option.id }}" class="ml-3 block text-sm font-medium text-gray-700">
+        {{ option.text }}
+    </label>
+</div>
+{% endfor %}
+
                         </div>
                     {% endif %}
                 </div>

@@ -59,14 +59,27 @@ class User(AbstractUser):
         """Check if user is a counselor (by type or flag)"""
         return self.user_type == 'COUNSELOR' or getattr(self, 'is_counselor', False)
 
-
     @property
     def engagement_metrics(self):
         metrics, created = UserEngagementMetrics.objects.get_or_create(user=self)
+        
+        if created:
+            metrics.total_quiz_attempts = 0
+            metrics.total_resources_viewed = 0
+            metrics.total_appointments = 0
+            metrics.total_forum_posts = 0
+            metrics.total_mood_entries = 0
+            metrics.total_logins = 0
+            metrics.last_active = timezone.now()
+            metrics.save()
+
         return metrics
+
+
+
     
     def log_activity(self, action, **kwargs):
-        """Helper method to log user activities"""
+        """Helper method to log user activities."""
         UserActivityLog.objects.create(
             user=self,
             action=action,
@@ -74,8 +87,9 @@ class User(AbstractUser):
             device_info=kwargs.get('device_info'),
             additional_data=kwargs.get('data', {})
         )
-        # Update engagement metrics
+        # Update engagement metrics (assuming your `engagement_metrics` property is correct)
         self.engagement_metrics.last_active = timezone.now()
+        self.engagement_metrics.save()
         
         # Increment relevant counters
         if action == 'QUIZ_COMPLETE':
@@ -302,6 +316,15 @@ class UserResponse(models.Model):
         return self.points_earned
 
 class MoodEntry(models.Model):
+    # Status choices for how the user is generally doing
+    STATUS_CHOICES = (
+        ('STRUGGLING', 'I need help with something specific'),
+        ('EXPLORING', 'Just exploring mental health topics'),
+        ('MAINTAINING', 'Doing okay, maintaining my wellbeing'),
+        ('CELEBRATING', 'Feeling great and want to celebrate!'),
+    )
+    
+    # Mood level choices
     MOOD_CHOICES = (
         (1, 'Very Negative'),
         (2, 'Negative'),
@@ -310,26 +333,96 @@ class MoodEntry(models.Model):
         (5, 'Very Positive'),
     )
     
+    # Fields
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mood_entries')
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='EXPLORING',
+        help_text="General state of the user when recording this entry"
+    )
     mood_level = models.PositiveSmallIntegerField(choices=MOOD_CHOICES)
     notes = models.TextField(blank=True)
     recorded_at = models.DateTimeField(default=timezone.now)
-    related_quiz = models.ForeignKey(QuizAttempt, on_delete=models.SET_NULL, null=True, blank=True)
+    related_quiz = models.ForeignKey(
+        QuizAttempt, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        help_text="Optional link to a quiz attempt that might relate to this mood"
+    )
     
     class Meta:
         verbose_name_plural = 'Mood entries'
         ordering = ['-recorded_at']
+        indexes = [
+            models.Index(fields=['user', 'recorded_at']),
+            models.Index(fields=['status']),
+            models.Index(fields=['mood_level']),
+        ]
     
     def __str__(self):
-        return f"{self.user.username}: {self.get_mood_level_display()} at {self.recorded_at}"
+        return f"{self.user.username}: {self.get_status_display()} | {self.get_mood_level_display()} at {self.recorded_at}"
 
     def get_recommended_difficulty(self):
-        if self.mood_level in [1, 5]:
-            return 'HARD'
-        elif self.mood_level in [2, 4]:
-            return 'MEDIUM'
+        """
+        Returns recommended quiz difficulty based on both status and mood level
+        with more nuanced recommendations than before
+        """
+        # Status-based difficulty overrides
+        if self.status == 'STRUGGLING':
+            return 'EASY'  # Gentle content for struggling users
+        elif self.status == 'CELEBRATING':
+            return 'HARD'  # Challenging content for thriving users
+        
+        # Mood-based difficulty for other statuses
+        mood_difficulty = {
+            1: 'HARD',   # Very Negative - more intensive resources
+            2: 'MEDIUM', # Negative - balanced approach
+            3: 'EASY',   # Neutral - lighter content
+            4: 'MEDIUM', # Positive - slightly more challenging
+            5: 'HARD'   # Very Positive - capitalizing on good mood
+        }
+        
+        return mood_difficulty.get(self.mood_level, 'MEDIUM')
+
+    def get_recommended_categories(self):
+        """
+        Returns list of recommended category names based on status and mood
+        """
+        # Status-based category recommendations
+        status_categories = {
+            'STRUGGLING': ['depression', 'anxiety', 'stress-management'],
+            'EXPLORING': [],  # All categories
+            'MAINTAINING': ['wellness', 'mindfulness', 'self-care'],
+            'CELEBRATING': ['happiness', 'gratitude', 'positive-psychology']
+        }
+        
+        # Mood-based category additions
+        mood_categories = {
+            1: ['coping-strategies', 'resilience'],
+            2: ['self-compassion', 'emotional-regulation'],
+            3: ['personal-growth', 'mindfulness'],
+            4: ['positive-psychology', 'relationships'],
+            5: ['strengths', 'purpose']
+        }
+        
+        categories = status_categories.get(self.status, [])
+        categories.extend(mood_categories.get(self.mood_level, []))
+        
+        return list(set(categories))  # Remove duplicates
+
+    @property
+    def mood_trend(self):
+        """
+        Returns the general trend of the mood (negative, neutral, positive)
+        """
+        if self.mood_level in [1, 2]:
+            return 'negative'
+        elif self.mood_level == 3:
+            return 'neutral'
         else:
-             return 'EASY'    
+            return 'positive'  
 
 class WellnessResource(models.Model):
     RESOURCE_TYPES = (
@@ -508,7 +601,7 @@ class UserActivityLog(models.Model):
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     timestamp = models.DateTimeField(auto_now_add=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
-    device_info = models.CharField(max_length=255, blank=True)
+    device_info = models.CharField(max_length=255, blank=True, null=True)
     additional_data = models.JSONField(default=dict, blank=True)
     
     class Meta:
